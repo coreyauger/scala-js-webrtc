@@ -8,11 +8,11 @@ import scala.scalajs.js
 import io.surfkit.clientlib.webrtc._
 import org.scalajs.dom.experimental._
 
-object ScalaJWebRTCExample extends js.JSApp {
+object ScalaJsWebRTCExample extends js.JSApp {
   def main(): Unit = {
 
     val webRTC = new WebRTC()
-    webRTC.start(MediaConstraints(true, true)){ (err:DOMError, stream:MediaStream) =>
+    webRTC.start(MediaConstraints(true, true)){ stream:MediaStream =>
       println("Local stream...")
     }
 
