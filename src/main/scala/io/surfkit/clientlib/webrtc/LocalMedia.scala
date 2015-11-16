@@ -4,7 +4,7 @@ import org.scalajs.dom.raw.DOMError
 
 import scala.scalajs.js
 import scala.scalajs.js.Function
-import org.scalajs.dom.experimental._
+import org.scalajs.dom.experimental.webrtc._
 
 
 /**
@@ -46,9 +46,10 @@ trait LocalMedia {
   def videoOn():Unit
 
   def start(constraints: MediaConstraints)(cb:(MediaStream) => Unit):Unit = {
-    println("stream..")
+    println("stream.. ")
     // TODO: Shim this...
     NavigatorGetUserMedia.webkitGetUserMedia(constraints, (stream:MediaStream) => {
+      println("stream.. ")
       if (constraints.audio && Config.detectSpeakingEvents) {
         // TODO:..
         //self.setupAudioMonitor(stream, self.config.harkOptions);
@@ -67,7 +68,7 @@ trait LocalMedia {
         localStreamStopped(stream)
       }*/
       localStream(stream)
-      cb(stream)
+      //cb(stream)
     },(err:DOMError) => {
       println("error")
       println(err)

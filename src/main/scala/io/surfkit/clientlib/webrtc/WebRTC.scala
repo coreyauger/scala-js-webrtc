@@ -1,6 +1,8 @@
 package io.surfkit.clientlib.webrtc
 
-import org.scalajs.dom.experimental._
+import java.util.UUID
+
+import org.scalajs.dom.experimental.webrtc._
 
 
 import scala.scalajs.js
@@ -8,29 +10,36 @@ import scala.scalajs.js
 /**
  * Created by corey auger on 13/11/15.
  */
-class WebRTC extends LocalMedia{
+class WebRTC extends LocalMedia with Peer.PeerSignaler{
   println("WebRTC")
+
+  def send(s:Peer.Signaling):Unit = {
+    println(s"SEND => ${s}")
+  }
 
   val rtcConfiguration = RTCConfiguration(
     iceServers = js.Array[RTCIceServer](
       RTCIceServer(username = "stun:stun.l.google.com:19302")
     )
   )
-
   val receiveMedia = MediaConstraints(
     mandatory = js.Dynamic.literal(OfferToReceiveAudio = true, OfferToReceiveVideo = true)
   )
-/*
-  val peer = new Peer(Peer.Props(
-
-  ))*/
-
   val peerConnectionConstraints = MediaConstraints(optional = js.Array[js.Dynamic](
     js.Dynamic.literal(DtlsSrtpKeyAgreement = true)
   ))
 
   override def localStream(stream:MediaStream):Unit = {
     println("localStream")
+    val peer = new Peer(Peer.Props(
+      id = UUID.randomUUID().toString,
+      signaler = this,
+      rtcConfiguration = rtcConfiguration,
+      stream = stream,
+      receiveMedia = receiveMedia,
+      peerConnectionConstraints = peerConnectionConstraints
+    ))
+    peer.start()
   }
   override def localStreamStopped(stream:MediaStream):Unit = {
     println("localStreamStopped")
