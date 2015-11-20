@@ -10,16 +10,18 @@ import scala.scalajs.js
 /**
  * Created by corey auger on 13/11/15.
  */
-class WebRTC extends LocalMedia with Peer.PeerSignaler{
+class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) extends LocalMedia with Peer.PeerSignaler{
   println("WebRTC")
 
   def send(s:Peer.Signaling):Unit = {
     println(s"SEND => ${s}")
+    signaler.send(s)
   }
+
 
   val rtcConfiguration = RTCConfiguration(
     iceServers = js.Array[RTCIceServer](
-      RTCIceServer(username = "stun:stun.l.google.com:19302")
+      RTCIceServer(url = "stun:stun.l.google.com:19302")
     )
   )
   val receiveMedia = MediaConstraints(
@@ -40,6 +42,9 @@ class WebRTC extends LocalMedia with Peer.PeerSignaler{
       peerConnectionConstraints = peerConnectionConstraints
     ))
     peer.start()
+    signaler.receivers.push({ signal:Peer.Signaling =>
+      peer.handleMessage(signal)
+    })
   }
   override def localStreamStopped(stream:MediaStream):Unit = {
     println("localStreamStopped")

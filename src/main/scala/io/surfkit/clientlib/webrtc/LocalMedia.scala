@@ -2,9 +2,12 @@ package io.surfkit.clientlib.webrtc
 
 import org.scalajs.dom.raw.DOMError
 
+import scala.concurrent.{Promise, Future}
 import scala.scalajs.js
 import scala.scalajs.js.Function
 import org.scalajs.dom.experimental.webrtc._
+
+import scala.util.Try
 
 
 /**
@@ -45,10 +48,10 @@ trait LocalMedia {
 
   def videoOn():Unit
 
-  def start(constraints: MediaConstraints)(cb:(MediaStream) => Unit):Unit = {
+  def start(constraints: MediaConstraints):Future[MediaStream] = {
     println("stream.. ")
-    // TODO: Shim this...
-    NavigatorGetUserMedia.webkitGetUserMedia(constraints, (stream:MediaStream) => {
+    val p = Promise[MediaStream]()
+    MediaDevices.getUserMedia(constraints).andThen((stream:MediaStream) => {
       println("stream.. ")
       if (constraints.audio && Config.detectSpeakingEvents) {
         // TODO:..
@@ -61,22 +64,19 @@ trait LocalMedia {
         // TODO: ..
         //self.setMicIfEnabled(0.5);
       }
-      // TODO: might need to migrate to the video tracks onended
-      // FIXME: firefox does not seem to trigger this...
-      /*stream.onended = {
-        localStreams -= stream
-        localStreamStopped(stream)
-      }*/
       localStream(stream)
+      p.complete(Try(stream))
       //cb(stream)
-    },(err:DOMError) => {
+    })/*.recover( (err:DOMError) => {
       println("error")
       println(err)
       if (Config.audioFallback && err.name == "DevicesNotFoundError" && constraints.video != false) {
         constraints.video = false
-        start(constraints)(cb)
+        start(constraints)
       }
-    })
+      ""
+    })*/
+    p.future
   }
 
   def stop(stream:MediaStream):Unit = {
@@ -107,7 +107,7 @@ trait LocalMedia {
   def startScreenShare()(cb:(MediaStream) => Unit):Unit = {
     println("startScreenShare stream..")
     // TODO: Shim this...
-    NavigatorGetUserMedia.webkitGetScreenMedia((stream:MediaStream) => {
+    /*NavigatorGetUserMedia.webkitGetScreenMedia((stream:MediaStream) => {
       localScreens += stream
       // TODO: might need to migrate to the video tracks onended
       // FIXME: firefox does not seem to trigger this...
@@ -120,7 +120,7 @@ trait LocalMedia {
     },(err:DOMError) => {
       println("error")
       println(err)
-    })
+    })*/
   }
 
   def stopScreenShare(stream:MediaStream):Unit = {

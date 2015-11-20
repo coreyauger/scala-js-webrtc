@@ -2,6 +2,7 @@ package io.surfkit.clientlib.webrtc
 
 import java.util.UUID
 import org.scalajs.dom
+import scalajs.js
 import org.scalajs.dom.experimental.webrtc._
 import org.scalajs.dom.raw.{DOMError, Event}
 
@@ -29,6 +30,20 @@ object Peer{
 
   trait PeerSignaler{
     def send(s:Signaling):Unit
+  }
+
+  trait ModelTransformPeerSignaler[T] extends PeerSignaler{
+    var receivers = js.Array[(Signaling) => Unit]()
+
+    def toPeerSignaling(model:T):Signaling
+    def fromPeerSignaling(s:Signaling):T
+
+    def receive(s:Signaling) = receivers.foreach(_.apply(s))
+    override def send(s:Signaling):Unit = sendModel(fromPeerSignaling(s))
+
+    // override ME
+    def sendModel(model:T):Unit
+
   }
 }
 
@@ -137,11 +152,12 @@ class Peer(p:Peer.Props) {
 
 
   def handleMessage(message:Peer.Signaling):Unit = {
-    println(s"handleMessage ${message}")
+    println(s"handleMessage ${message.toString}")
 
     //if (message.prefix) this.browserPrefix = message.prefix;
     message match{
       case Peer.Offer(offer) =>
+        println(s"Offer ${offer.toString}")
         pc.setRemoteDescription(offer,() => {
           println("setRemoteDescription success")
         },handleError _)
@@ -162,6 +178,7 @@ class Peer(p:Peer.Props) {
         },handleError _)
 
       case Peer.Candidate(candidate) =>
+        println(s"Peer.Candidate ${candidate.toString}")
         pc.addIceCandidate(candidate, () => {
           println("addIceCandidate. success")
         },handleError _)

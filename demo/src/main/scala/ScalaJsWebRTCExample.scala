@@ -12,6 +12,7 @@ object ScalaJsWebRTCExample extends js.JSApp {
   def main(): Unit = {
 
     val webRTC = new WebRTC()
+    webRTC.onlo
     webRTC.start(MediaConstraints(true, true)){ stream:MediaStream =>
       println("Local stream...")
     }
