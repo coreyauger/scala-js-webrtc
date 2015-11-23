@@ -48,7 +48,7 @@ trait LocalMedia {
 
   def videoOn():Unit
 
-  def start(constraints: MediaConstraints):Future[MediaStream] = {
+  def startLocalMedia(constraints: MediaConstraints):Future[MediaStream] = {
     println("stream.. ")
     val p = Promise[MediaStream]()
     MediaDevices.getUserMedia(constraints).andThen((stream:MediaStream) => {
@@ -79,7 +79,7 @@ trait LocalMedia {
     p.future
   }
 
-  def stop(stream:MediaStream):Unit = {
+  def stopLocalMedia(stream:MediaStream):Unit = {
     // FIXME: duplicates cleanup code until fixed in FF
     stream.getTracks().foreach(_.stop())
     if (localStreams.contains(stream)) {

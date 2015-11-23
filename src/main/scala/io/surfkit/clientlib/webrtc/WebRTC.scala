@@ -13,9 +13,15 @@ import scala.scalajs.js
 class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) extends LocalMedia with Peer.PeerSignaler{
   println("WebRTC")
 
+  var peers = js.Array[Peer]()
+
   def send(s:Peer.Signaling):Unit = {
     println(s"SEND => ${s}")
     signaler.send(s)
+  }
+
+  def peerStreamAdded(peer:Peer) = {
+
   }
 
 
@@ -33,18 +39,17 @@ class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) extends Lo
 
   override def localStream(stream:MediaStream):Unit = {
     println("localStream")
-    val peer = new Peer(Peer.Props(
+    /*localPeer = Some(new Peer(Peer.Props(
       id = UUID.randomUUID().toString,
       signaler = this,
       rtcConfiguration = rtcConfiguration,
-      stream = stream,
       receiveMedia = receiveMedia,
       peerConnectionConstraints = peerConnectionConstraints
-    ))
+    )))
     peer.start()
     signaler.receivers.push({ signal:Peer.Signaling =>
-      peer.handleMessage(signal)
-    })
+      localPeer.foreach(_.handleMessage(signal))
+    })*/
   }
   override def localStreamStopped(stream:MediaStream):Unit = {
     println("localStreamStopped")
@@ -67,6 +72,22 @@ class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) extends Lo
 
   override def videoOn():Unit = {
     println("video On")
+  }
+
+  def createPeer(props:Peer.Props):Peer = {
+    val peer = new Peer(props)
+    localStreams.foreach(peer.addStream(_))
+    peer.onAddStream = { s:MediaStream =>
+      peerStreamAdded(peer)
+    }
+    peers.push(peer)
+    peer
+  }
+
+  def removePeers(id:String) = {
+    val (rem, rest) = peers.partition(_.id == id)
+    rem.foreach(_.end)
+    peers = rest
   }
 
 }
