@@ -16,13 +16,26 @@ import scala.util.{Failure, Success, Try}
  */
 class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) extends WebRTC[M, T](signaler) {
 
+  // TODO: pass these in...
+  val rtcConfiguration = RTCConfiguration(
+    iceServers = js.Array[RTCIceServer](
+      RTCIceServer(url = "stun:stun.l.google.com:19302"),
+      RTCIceServer(url = "turn:turn.conversant.im:443", username="turnuser", credential = "trunpass")
+    )
+  )
+  val receiveMedia = MediaConstraints(
+    mandatory = js.Dynamic.literal(OfferToReceiveAudio = true, OfferToReceiveVideo = true)
+  )
+  val peerConnectionConstraints = MediaConstraints(optional = js.Array[js.Dynamic](
+    js.Dynamic.literal(DtlsSrtpKeyAgreement = true)
+  ))
+
   def startLocalVideo(constraints:MediaConstraints, videoElm:dom.html.Video):Future[MediaStream] = {
     startLocalMedia(constraints).map{ stream: MediaStream =>
       (videoElm.asInstanceOf[js.Dynamic]).srcObject = stream
       stream
     }
   }
-
 
   def joinRoom(name:String):Future[Peer.Room] = {
     val p = Promise[Peer.Room]()
