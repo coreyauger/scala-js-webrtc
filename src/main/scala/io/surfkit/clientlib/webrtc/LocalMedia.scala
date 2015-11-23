@@ -34,19 +34,14 @@ trait LocalMedia {
   //  println("Your browser does not support local media capture.")
  // }
 
-  def localStream(stream:MediaStream):Unit
-
-  def localStreamStopped(stream:MediaStream):Unit
-
-  def localScreenStopped(stream:MediaStream):Unit
-
-  def audioOff():Unit
-
-  def audioOn():Unit
-
-  def videoOff():Unit
-
-  def videoOn():Unit
+  // Event handlers ...
+  var localStream: (MediaStream) => Unit = { stream => println("localStream") }
+  var localStreamStopped:(MediaStream) => Unit = { stream => println("localStreamStopped") }
+  var localScreenStopped:(MediaStream) => Unit = { stream => println("localScreenStopped") }
+  var audioOff:() => Unit = () => {}
+  var audioOn:() => Unit = () => {}
+  var videoOff:() => Unit = () => {}
+  var videoOn:() => Unit = () => {}
 
   def startLocalMedia(constraints: MediaConstraints):Future[MediaStream] = {
     println("stream.. ")

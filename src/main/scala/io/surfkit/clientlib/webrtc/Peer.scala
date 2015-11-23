@@ -8,10 +8,12 @@ import scala.util.Try
 import scalajs.js
 import org.scalajs.dom.experimental.webrtc._
 import org.scalajs.dom.raw.{DOMError, Event}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 object Peer{
-  case class Props(id:String,
+  case class Props(local:PeerInfo,
+                   remote:PeerInfo,
                    signaler: PeerSignaler,
                    rtcConfiguration:RTCConfiguration,
                    receiveMedia: MediaConstraints,
@@ -24,25 +26,27 @@ object Peer{
                     )
 
   sealed trait Signaling{
-    def  peer:PeerInfo
+    def remote:PeerInfo
+    def local:PeerInfo
   }
 
   case class PeerInfo(id:String, `type`: String)
+  def EmptyPeer = PeerInfo("","")
 
-  case class Join(room:String, peer:PeerInfo) extends Signaling
-  case class Room(name:String, peer:PeerInfo, config:RTCConfiguration, members:js.Array[PeerInfo]) extends Signaling
+  case class Join(remote: PeerInfo, local: PeerInfo, room:String) extends Signaling
+  case class Room(remote: PeerInfo, local: PeerInfo, name:String, config:RTCConfiguration, members:js.Array[PeerInfo]) extends Signaling
 
-  case class Offer(peer:PeerInfo, offer:RTCSessionDescription) extends Signaling
-  case class Answer(peer:PeerInfo, answer:RTCSessionDescription) extends Signaling
-  case class Candidate(peer:PeerInfo, candidate:RTCIceCandidate) extends Signaling
-  case class Error(peer:PeerInfo, reason:String) extends Signaling
+  case class Offer(remote: PeerInfo, local: PeerInfo, offer:RTCSessionDescription) extends Signaling
+  case class Answer(remote: PeerInfo, local: PeerInfo, answer:RTCSessionDescription) extends Signaling
+  case class Candidate(remote: PeerInfo, local: PeerInfo, candidate:RTCIceCandidate) extends Signaling
+  case class Error(remote: PeerInfo, local: PeerInfo, reason:String) extends Signaling
 
   trait PeerSignaler{
     def send(s:Signaling):Unit
   }
 
   trait ModelTransformPeerSignaler[T] extends PeerSignaler{
-    val peerInfo:PeerInfo
+    val localPeer:PeerInfo
 
     var receivers = js.Array[(Signaling) => Unit]()
 
@@ -63,10 +67,9 @@ object Peer{
  */
 class Peer(p:Peer.Props) {
 
-  val id = p.id
+  val local = p.local
+  val remote = p.remote
   val sid = p.sid
-
-  val info = PeerInfo(id, p.`type`)
 
   private val streamPromise = Promise[MediaStream]()
   val stream = streamPromise.future
@@ -75,19 +78,29 @@ class Peer(p:Peer.Props) {
   val addStream = pc.addStream _
   val removeStream = pc.removeStream _
 
+
   pc.onaddstream = { evt: MediaStreamEvent =>
+    evt.stream.getTracks.foreach{ t:MediaStreamTrack =>
+      t.oneended = { ev:Event =>
+        println("Track oneended")
+        onRemoveStream(evt.stream)
+      }
+    }
     streamPromise.complete(Try(evt.stream))
     onAddStream(evt.stream)
   }
 
-  // override me
-  def streamAdded(stream:MediaStream): Unit ={}
+  pc.onremovestream = { evt: MediaStreamEvent =>
+    onRemoveStream(evt.stream)
+  }
 
-  var onAddStream = streamAdded _
+  // Override these event handlers.
+  var onAddStream = (stream:MediaStream) => {}
+  var onRemoveStream = (stream:MediaStream) => {}
 
   pc.onicecandidate = { evt:RTCPeerConnectionIceEvent =>
     if( evt.candidate != null)  // FIXME: really ?
-      p.signaler.send(Peer.Candidate(info, evt.candidate))
+      p.signaler.send(Peer.Candidate(remote,local, evt.candidate))
   }
   pc.onnegotiationneeded = { evt:Event =>
     println("onNegotiationneeded")
@@ -100,8 +113,13 @@ class Peer(p:Peer.Props) {
         // so we need to signal this to the peer
         if (pc.localDescription.`type` == RTCSdpType.offer) {
           println("iceFailed ")
-          p.signaler.send( Peer.Error(info, "connectivityError ICE FAILED"))
+          p.signaler.send( Peer.Error(remote, local, "connectivityError ICE FAILED"))
         }
+      case IceConnectionState.disconnected =>
+        stream.foreach(onRemoveStream)
+
+      case allOther =>
+        println(s"IceConnectionState ${allOther}")
     }
   }
   pc.onsignalingstatechange = { evt:Event =>
@@ -120,14 +138,12 @@ class Peer(p:Peer.Props) {
     //}
     println("create offer")
     pc.createOffer({ offer:RTCSessionDescription =>
-      // does not work for jingle, but jingle.js doesn't need
-      // this hack...
       val expandedOffer =  RTCSessionDescription(`type` = "offer", sdp = offer.sdp)
       //println(s"offer: ${offer}")
       println("setLocalDescription")
       pc.setLocalDescription(offer,() =>{
         println("signal offer")
-        p.signaler.send(Peer.Offer(info, offer))
+        p.signaler.send(Peer.Offer(remote, local, offer))
       },handleError _)
     },handleError _,p.receiveMedia)
   }
@@ -141,39 +157,46 @@ class Peer(p:Peer.Props) {
     pc.close
   }
 
+  def answer(offer:RTCSessionDescription) = {
+    println("creating an answer..")
+    pc.createAnswer({ answer:RTCSessionDescription =>
+      pc.setLocalDescription(answer,() => {
+        println(s"createAnswer for:  ${remote}")
+        p.signaler.send(Peer.Answer(remote, local, answer))
+      },handleError _)
+
+    },handleError _, p.receiveMedia)
+  }
+
 
   def handleMessage(message:Peer.Signaling):Unit = {
     println(s"handleMessage ${message.toString}")
 
     //if (message.prefix) this.browserPrefix = message.prefix;
     message match{
-      case Peer.Offer(peer, offer) if peer.id == id =>
+      case Peer.Offer(r, l, offer) if l.id == remote.id =>
         //println(s"Offer ${offer.toString}")
-        println("Peer.Offer")
+        println(s"Peer.Offer from: ${l}")
         pc.setRemoteDescription(offer,() => {
           println("setRemoteDescription success")
           // auto-accept
-          println("creating an answer..")
-          pc.createAnswer({ answer:RTCSessionDescription =>
-            println(s"createAnswer: ${answer}")
-            p.signaler.send(Peer.Answer(info, answer))
-          },handleError _, p.receiveMedia)
+          answer(offer)
         },handleError _)
 
-      case Peer.Answer(peer, answer) if peer.id == id =>
-        println("Peer.Answer")
+      case Peer.Answer(r, l, answer) if l.id == remote.id =>
+        println(s"Peer.Answer from: ${l}")
         pc.setRemoteDescription(answer, () => {
           println("setRemoteDescription. success")
           // SEE   if (self.wtFirefox) { .. }  https://github.com/otalk/RTCPeerConnection/blob/master/rtcpeerconnection.js#L507
         },handleError _)
 
-      case Peer.Candidate(peer, candidate) if peer.id == id =>
+      case Peer.Candidate(r, l, candidate) if l.id == remote.id =>
         println(s"Peer.Candidate ${candidate.toString}")
         pc.addIceCandidate(candidate, () => {
           println("addIceCandidate. success")
         },handleError _)
 
-      case Peer.Error(peer, reason) if peer.id == id =>
+      case Peer.Error(r, l, reason) if l.id == remote.id =>
         println(s"Peer sent you error: ${reason}")
 
       case _ =>
