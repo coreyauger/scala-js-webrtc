@@ -20,7 +20,7 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) exte
   val rtcConfiguration = RTCConfiguration(
     iceServers = js.Array[RTCIceServer](
       RTCIceServer(url = "stun:stun.l.google.com:19302"),
-      RTCIceServer(url = "turn:turn.conversant.im:443", username="turnuser", credential = "trunpass")
+      RTCIceServer(url = "turn:turn.conversant.im:443", username="turnuser", credential = "turnpass")
     )
   )
   val receiveMedia = MediaConstraints(
