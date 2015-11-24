@@ -3,13 +3,14 @@ package io.surfkit.clientlib.webrtc
 import java.util.UUID
 
 import io.surfkit.clientlib.webrtc.Peer.PeerInfo
-
+import org.scalajs.dom._
 import scala.concurrent.{Promise, Future}
 import scala.scalajs.js
 import org.scalajs.dom.experimental.webrtc._
 import org.scalajs.dom
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
+import org.scalajs.dom.{MediaStream, MediaStreamTrack, MediaStreamEvent}
 
 /**
  * Created by corey auger on 13/11/15.

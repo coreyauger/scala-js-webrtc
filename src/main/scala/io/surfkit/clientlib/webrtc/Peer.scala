@@ -3,6 +3,7 @@ package io.surfkit.clientlib.webrtc
 import java.util.UUID
 import io.surfkit.clientlib.webrtc.Peer.PeerInfo
 import org.scalajs.dom
+import org.scalajs.dom._
 import scala.concurrent.Promise
 import scala.util.Try
 import scalajs.js

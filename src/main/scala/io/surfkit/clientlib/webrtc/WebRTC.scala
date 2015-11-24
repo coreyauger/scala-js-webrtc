@@ -2,6 +2,7 @@ package io.surfkit.clientlib.webrtc
 
 import java.util.UUID
 import org.scalajs.dom.experimental.webrtc._
+import org.scalajs.dom._
 import org.scalajs.dom.raw.{DOMError, Event}
 
 import scala.scalajs.js

@@ -4,8 +4,10 @@ import org.scalajs.dom.raw.DOMError
 
 import scala.concurrent.{Promise, Future}
 import scala.scalajs.js
-import scala.scalajs.js.Function
+import scala.scalajs.js.timers.SetTimeoutHandle
+import scala.scalajs.js.{timers, Function}
 import org.scalajs.dom.experimental.webrtc._
+import org.scalajs.dom._
 
 import scala.util.Try
 
@@ -17,7 +19,7 @@ import scala.util.Try
 // TODO: ...
 //https://github.com/otalk/hark/blob/master/hark.js#L18
 
-trait LocalMedia {
+trait LocalMedia extends Hark{
   object Config {
     var autoAdjustMic = false
     var detectSpeakingEvents = true
@@ -43,14 +45,30 @@ trait LocalMedia {
   var videoOff:() => Unit = () => {}
   var videoOn:() => Unit = () => {}
 
+  onSpeaking = () => {
+    //if(!hardMuted)
+    //  setMicIfEnabled(1)
+    println("speaking..")
+  }
+  var stopSpeakingTimeout:SetTimeoutHandle = timers.setTimeout(0){}
+  onSpeakingStopped = () => {
+    timers.clearTimeout(stopSpeakingTimeout)
+    stopSpeakingTimeout = timers.setTimeout(1000){
+      //setMicIfEnabled(0.5)
+      println("NOT speaking...")
+    }
+  }
+
+
   def startLocalMedia(constraints: MediaConstraints):Future[MediaStream] = {
     println("stream.. ")
     val p = Promise[MediaStream]()
     MediaDevices.getUserMedia(constraints).andThen((stream:MediaStream) => {
       println("stream.. ")
       if (constraints.audio && Config.detectSpeakingEvents) {
-        // TODO:..
-        //self.setupAudioMonitor(stream, self.config.harkOptions);
+        setupAudioMonitor(stream, Hark.Options(
+          play = true
+        ))
       }
       localStreams += stream
       if (Config.autoAdjustMic) {
