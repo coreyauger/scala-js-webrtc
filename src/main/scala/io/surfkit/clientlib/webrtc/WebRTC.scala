@@ -40,3 +40,20 @@ class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) extends Lo
   }
 
 }
+
+object WebRTC{
+  case class Props(
+    rtcConfiguration:RTCConfiguration = RTCConfiguration(
+      iceServers = js.Array[RTCIceServer](
+        RTCIceServer(url = "stun:stun.l.google.com:19302"),
+        RTCIceServer(url = "turn:turn.conversant.im:443", username="turnuser", credential = "trunpass")
+      )
+    ),
+    receiveMedia:MediaConstraints = MediaConstraints(
+      mandatory = js.Dynamic.literal(OfferToReceiveAudio = true, OfferToReceiveVideo = true)
+    ),
+    peerConnectionConstraints:MediaConstraints = MediaConstraints(optional = js.Array[js.Dynamic](
+      js.Dynamic.literal(DtlsSrtpKeyAgreement = true)
+    )))
+
+}

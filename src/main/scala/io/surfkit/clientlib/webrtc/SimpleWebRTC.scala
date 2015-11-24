@@ -42,12 +42,13 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) exte
     signaler.send(Peer.Join(Peer.EmptyPeer, signaler.localPeer, name))
     signaler.receivers.push({
       case r:Peer.Room if r.name == name =>
+        println("Got room")
         r.members.filter(_.id != signaler.localPeer.id).foreach{ m:Peer.PeerInfo =>
           val peer = createPeer( Peer.Props(
             remote = Peer.PeerInfo(m.id, m.`type`),
             local = signaler.localPeer,
             signaler = this,
-            rtcConfiguration = r.config,    // TODO: get rid of this?
+            rtcConfiguration = rtcConfiguration,
             receiveMedia = receiveMedia,
             peerConnectionConstraints = peerConnectionConstraints
           ))
@@ -64,7 +65,7 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) exte
               remote = o.local,
               local = signaler.localPeer,
               signaler = this,
-              rtcConfiguration = rtcConfiguration,    // TODO: room passed this in?
+              rtcConfiguration = rtcConfiguration,
               receiveMedia = receiveMedia,
               peerConnectionConstraints = peerConnectionConstraints
             ))
@@ -72,6 +73,7 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) exte
         }
 
       case msg if msg.local.id != signaler.localPeer.id =>
+        println(s"msg ${msg}")
         peers.foreach(_.handleMessage(msg))
 
       case _ =>

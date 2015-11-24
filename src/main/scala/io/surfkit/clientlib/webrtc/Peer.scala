@@ -34,7 +34,7 @@ object Peer{
   def EmptyPeer = PeerInfo("","")
 
   case class Join(remote: PeerInfo, local: PeerInfo, room:String) extends Signaling
-  case class Room(remote: PeerInfo, local: PeerInfo, name:String, config:RTCConfiguration, members:js.Array[PeerInfo]) extends Signaling
+  case class Room(remote: PeerInfo, local: PeerInfo, name:String, members:js.Array[PeerInfo]) extends Signaling
 
   case class Offer(remote: PeerInfo, local: PeerInfo, offer:RTCSessionDescription) extends Signaling
   case class Answer(remote: PeerInfo, local: PeerInfo, answer:RTCSessionDescription) extends Signaling
