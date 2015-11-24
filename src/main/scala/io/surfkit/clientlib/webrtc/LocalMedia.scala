@@ -11,15 +11,11 @@ import org.scalajs.dom._
 
 import scala.util.Try
 
-
 /**
  * Created by corey auger on 13/11/15.
  */
-
-// TODO: ...
-//https://github.com/otalk/hark/blob/master/hark.js#L18
-
 trait LocalMedia extends Hark{
+
   object Config {
     var autoAdjustMic = false
     var detectSpeakingEvents = true
@@ -191,49 +187,4 @@ trait LocalMedia extends Hark{
   def isAudioEnabled():Boolean = {
     localStreams.map(_.getAudioTracks().map(_.enabled).filter(_ == true)).length == localStreams.size
   }
-
-  // TODO: ....
-  /*
-  LocalMedia.prototype.setupAudioMonitor = function (stream, harkOptions) {
-    this._log('Setup audio');
-    var audio = this.audioMonitor = hark(stream, harkOptions);
-    var self = this;
-    var timeout;
-
-    audio.on('speaking', function () {
-        self.emit('speaking');
-        if (self.hardMuted) {
-            return;
-        }
-        self.setMicIfEnabled(1);
-    });
-
-    audio.on('stopped_speaking', function () {
-        if (timeout) {
-            clearTimeout(timeout);
-        }
-
-        timeout = setTimeout(function () {
-            self.emit('stoppedSpeaking');
-            if (self.hardMuted) {
-                return;
-            }
-            self.setMicIfEnabled(0.5);
-        }, 1000);
-    });
-    audio.on('volume_change', function (volume, treshold) {
-        self.emit('volumeChange', volume, treshold);
-    });
-};
-
-// We do this as a seperate method in order to
-// still leave the "setMicVolume" as a working
-// method.
-LocalMedia.prototype.setMicIfEnabled = function (volume) {
-    if (!this.config.autoAdjustMic) {
-        return;
-    }
-    this.gainController.setGain(volume);
-};
-   */
 }

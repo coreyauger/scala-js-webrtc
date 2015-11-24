@@ -10,7 +10,7 @@ import scala.scalajs.js
 /**
  * Created by corey auger on 13/11/15.
  */
-class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) extends LocalMedia with Peer.PeerSignaler{
+class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, props:WebRTC.Props) extends LocalMedia with Peer.PeerSignaler{
   var peers = js.Array[Peer]()
 
   def send(s:Peer.Signaling):Unit = signaler.send(s)
@@ -46,8 +46,7 @@ object WebRTC{
   case class Props(
     rtcConfiguration:RTCConfiguration = RTCConfiguration(
       iceServers = js.Array[RTCIceServer](
-        RTCIceServer(url = "stun:stun.l.google.com:19302"),
-        RTCIceServer(url = "turn:turn.conversant.im:443", username="turnuser", credential = "trunpass")
+        RTCIceServer(url = "stun:stun.l.google.com:19302")
       )
     ),
     receiveMedia:MediaConstraints = MediaConstraints(
