@@ -6,17 +6,11 @@ import scala.concurrent.{Promise, Future}
 import scala.scalajs.js
 import scala.scalajs.js.Function
 import org.scalajs.dom.experimental.webrtc._
-
 import scala.util.Try
-
 
 /**
  * Created by corey auger on 13/11/15.
  */
-
-// TODO: ...
-//https://github.com/otalk/hark/blob/master/hark.js#L18
-
 trait LocalMedia {
   object Config {
     var autoAdjustMic = false

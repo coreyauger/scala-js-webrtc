@@ -14,7 +14,7 @@ import scala.util.{Failure, Success, Try}
 /**
  * Created by corey auger on 13/11/15.
  */
-class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) extends WebRTC[M, T](signaler) {
+class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, props:WebRTC.Props) extends WebRTC[M, T](signaler,props) {
 
   // TODO: pass these in...
   val rtcConfiguration = RTCConfiguration(
@@ -32,7 +32,9 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T) exte
 
   def startLocalVideo(constraints:MediaConstraints, videoElm:dom.html.Video):Future[MediaStream] = {
     startLocalMedia(constraints).map{ stream: MediaStream =>
-      (videoElm.asInstanceOf[js.Dynamic]).srcObject = stream
+      val videoDyn = (videoElm.asInstanceOf[js.Dynamic])
+      videoDyn.muted = true
+      videoDyn.srcObject = stream
       stream
     }
   }
