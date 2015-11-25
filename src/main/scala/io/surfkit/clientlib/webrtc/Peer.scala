@@ -98,13 +98,18 @@ class Peer(p:Peer.Props) {
   var onRemoveStream = (stream:MediaStream) => {}
 
   pc.onicecandidate = { evt:RTCPeerConnectionIceEvent =>
+    println("[INTO] - onicecandidate")
+    println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
     if( evt.candidate != null)  // FIXME: really ?
       p.signaler.send(Peer.Candidate(remote,local, evt.candidate))
+    else
+      println("[WARN] - there was a NULL for candidate")
   }
   pc.onnegotiationneeded = { evt:Event =>
     println("onNegotiationneeded")
   }
   pc.oniceconnectionstatechange = { evt:Event =>
+    println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
     println("oniceconnectionstatechange")
     pc.iceConnectionState match {
       case IceConnectionState.failed =>
@@ -115,6 +120,7 @@ class Peer(p:Peer.Props) {
           p.signaler.send( Peer.Error(remote, local, "connectivityError ICE FAILED"))
         }
       case IceConnectionState.disconnected =>
+        println("[ERROR] - IceConnectionState.disconnected")
         streams.headOption.foreach(onRemoveStream)
 
       case allOther =>
@@ -122,7 +128,10 @@ class Peer(p:Peer.Props) {
     }
   }
   pc.onsignalingstatechange = { evt:Event =>
-    println(s"onsignalingstatechange: ${pc.signalingState}")
+    println(s"=======================================================================")
+    println(s"[INFO] - onsignalingstatechange: ${pc.signalingState}")
+    println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
+    println(s"=======================================================================")
   }
 
 
