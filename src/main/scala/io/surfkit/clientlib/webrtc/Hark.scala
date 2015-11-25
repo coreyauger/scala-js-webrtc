@@ -104,6 +104,6 @@ object Hark{
   case class Options(smoothing:Double = 0.1,
                      interval:Int = 50,
                      threshold:Int = -55,
-                     play:Boolean = true,
+                     play:Boolean = false,
                      history:Int = 10)
 }

@@ -64,7 +64,7 @@ trait LocalMedia extends Hark{
       println("stream.. ")
       if (constraints.audio && Config.detectSpeakingEvents) {
         setupAudioMonitor(stream, Hark.Options(
-          play = true
+          play = false
         ))
       }
       localStreams += stream
