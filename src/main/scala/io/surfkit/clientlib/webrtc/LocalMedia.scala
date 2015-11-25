@@ -27,6 +27,7 @@ trait LocalMedia extends Hark{
   var hardMuted = false
   var localStreams = Set.empty[MediaStream]
   var localScreens = Set.empty[MediaStream]
+  var gainController:Option[GainController] = None
 
   //if (!Support.support) {
   //  println("Your browser does not support local media capture.")
@@ -42,15 +43,15 @@ trait LocalMedia extends Hark{
   var videoOn:() => Unit = () => {}
 
   onSpeaking = () => {
-    //if(!hardMuted)
-    //  setMicIfEnabled(1)
+    if(!hardMuted)
+      gainController.foreach(_.setGain(1.0))
     println("speaking..")
   }
   var stopSpeakingTimeout:SetTimeoutHandle = timers.setTimeout(0){}
   onSpeakingStopped = () => {
     timers.clearTimeout(stopSpeakingTimeout)
     stopSpeakingTimeout = timers.setTimeout(1000){
-      //setMicIfEnabled(0.5)
+      gainController.foreach(_.setGain(0.4))
       println("NOT speaking...")
     }
   }
@@ -68,14 +69,11 @@ trait LocalMedia extends Hark{
       }
       localStreams += stream
       if (Config.autoAdjustMic) {
-        //self.gainController = new GainController(stream);
-        // start out somewhat muted if we can track audio
-        // TODO: ..
-        //self.setMicIfEnabled(0.5);
+        gainController = Some(new GainController(stream))
+        gainController.foreach(_.setGain(0.5))
       }
       localStream(stream)
       p.complete(Try(stream))
-      //cb(stream)
     })/*.recover( (err:DOMError) => {
       println("error")
       println(err)
@@ -101,10 +99,9 @@ trait LocalMedia extends Hark{
   }
 
   def stopStream():Unit = {
-    // TODO: hark
-    //if (audioMonitor) {
-    //  audioMonitor.stop()
-    //}
+    if (Config.detectSpeakingEvents) {
+      stopAudioMonitor
+    }
     localStreams.foreach{s =>
       s.getTracks().foreach(_.stop())
       localStreamStopped(s)

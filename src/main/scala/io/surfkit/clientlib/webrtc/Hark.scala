@@ -1,6 +1,5 @@
 package io.surfkit.clientlib.webrtc
 
-import scala.annotation.tailrec
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.timers
 import scala.scalajs.js.typedarray.Float32Array
@@ -90,8 +89,8 @@ trait Hark {
     fftBins.toArray.drop(4).filter(_ != 0).max
   }
 
-  def stop = {
-    running = false;
+  def stopAudioMonitor = {
+    running = false
     onVolumeChange(-100, threshold)
     if (speaking) {
       speaking = false

@@ -36,6 +36,7 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, prop
       val videoDyn = (videoElm.asInstanceOf[js.Dynamic])
       videoDyn.muted = true
       videoDyn.srcObject = stream
+      videoDyn.style.display = "block"
       stream
     }
   }
