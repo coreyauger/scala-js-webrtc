@@ -4,7 +4,6 @@ import java.util.UUID
 import io.surfkit.clientlib.webrtc.Peer.PeerInfo
 import org.scalajs.dom
 import org.scalajs.dom._
-import scala.concurrent.Promise
 import scala.util.Try
 import scalajs.js
 import org.scalajs.dom.experimental.webrtc._
@@ -72,8 +71,7 @@ class Peer(p:Peer.Props) {
   val remote = p.remote
   val sid = p.sid
 
-  private val streamPromise = Promise[MediaStream]()
-  val stream = streamPromise.future
+  var streams = List.empty[MediaStream]
 
   val pc = new RTCPeerConnection(p.rtcConfiguration, p.peerConnectionConstraints)
   val addStream = pc.addStream _
@@ -87,7 +85,7 @@ class Peer(p:Peer.Props) {
         onRemoveStream(evt.stream)
       }
     }
-    streamPromise.complete(Try(evt.stream))
+    streams = evt.stream :: streams
     onAddStream(evt.stream)
   }
 
@@ -117,7 +115,7 @@ class Peer(p:Peer.Props) {
           p.signaler.send( Peer.Error(remote, local, "connectivityError ICE FAILED"))
         }
       case IceConnectionState.disconnected =>
-        stream.foreach(onRemoveStream)
+        streams.headOption.foreach(onRemoveStream)
 
       case allOther =>
         println(s"IceConnectionState ${allOther}")
