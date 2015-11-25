@@ -43,6 +43,9 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, prop
 
   def joinRoom(name:String):Future[Peer.Room] = {
     val p = Promise[Peer.Room]()
+    // clear known peers...
+    peers.foreach(_.end)
+    peers = js.Array[Peer]()
     signaler.send(Peer.Join(Peer.EmptyPeer, signaler.localPeer, name))
     signaler.receivers.push({
       case r:Peer.Room if r.name == name =>
