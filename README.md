@@ -64,8 +64,6 @@ class WebSocketSignaler extends Peer.ModelTransformPeerSignaler[m.RTCSignal]{
   implicit def peerToModel(p:Peer.PeerInfo):m.Signaling.PeerInfo = m.Signaling.PeerInfo(p.id, p.`type`)
 
   override def toPeerSignaling(model:m.RTCSignal):Peer.Signaling = model match{
-    case m.Signaling.Join(r, l,name) =>
-      Peer.Join(r, l, name)
     case m.Signaling.Room(r, l, name, members) =>
       import js.JSConverters._
       val peers = members.map(p => Peer.PeerInfo(id = p.id, `type` = p.`type`))
