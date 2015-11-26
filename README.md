@@ -110,7 +110,7 @@ class WebSocketSignaler extends Peer.ModelTransformPeerSignaler[m.RTCSignal]{
     )
   )
 
-  val webRTC = new SimpleWebRTC[m.RTCSignal,WebSocketSignaler](signaler, props)
+  val webRTC = new SimpleWebRTC(signaler, props)
 ```
 
 Now your only requiremnt on the server is that messages from a `local` peer get routed to their `remote` peer.
