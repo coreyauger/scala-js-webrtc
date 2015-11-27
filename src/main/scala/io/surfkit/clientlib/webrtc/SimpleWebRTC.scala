@@ -17,19 +17,6 @@ import org.scalajs.dom.{MediaStream, MediaStreamTrack, MediaStreamEvent}
  */
 class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, props:WebRTC.Props) extends WebRTC[M, T](signaler,props) {
 
-  // TODO: pass these in...
-  val rtcConfiguration = RTCConfiguration(
-    iceServers = js.Array[RTCIceServer](
-      RTCIceServer(url = "stun:stun.l.google.com:19302"),
-      RTCIceServer(url = "turn:turn.conversant.im:443", username="turnuser", credential = "turnpass")
-    )
-  )
-  val receiveMedia = MediaConstraints(
-    mandatory = js.Dynamic.literal(OfferToReceiveAudio = true, OfferToReceiveVideo = true)
-  )
-  val peerConnectionConstraints = MediaConstraints(optional = js.Array[js.Dynamic](
-    js.Dynamic.literal(DtlsSrtpKeyAgreement = true)
-  ))
 
   def startLocalVideo(constraints:MediaConstraints, videoElm:dom.html.Video):Future[MediaStream] = {
     startLocalMedia(constraints).map{ stream: MediaStream =>
@@ -56,9 +43,9 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, prop
             remote = Peer.PeerInfo(m.id, m.`type`),
             local = signaler.localPeer,
             signaler = signaler,
-            rtcConfiguration = rtcConfiguration,
-            receiveMedia = receiveMedia,
-            peerConnectionConstraints = peerConnectionConstraints
+            rtcConfiguration = props.rtcConfiguration,
+            receiveMedia = props.receiveMedia,
+            peerConnectionConstraints = props.peerConnectionConstraints
           ))
           peer.start
         }
@@ -73,9 +60,9 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, prop
               remote = o.local,
               local = signaler.localPeer,
               signaler = signaler,
-              rtcConfiguration = rtcConfiguration,
-              receiveMedia = receiveMedia,
-              peerConnectionConstraints = peerConnectionConstraints
+              rtcConfiguration = props.rtcConfiguration,
+              receiveMedia = props.receiveMedia,
+              peerConnectionConstraints = props.peerConnectionConstraints
             ))
             peer.handleMessage(o)
         }
