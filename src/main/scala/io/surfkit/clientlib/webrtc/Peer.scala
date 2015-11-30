@@ -170,17 +170,6 @@ class Peer(p:Peer.Props) {
     pc.close
   }
 
-  def setupIceExchange = {
-    readyForIceExchange = true
-    localIceQueue.reverse.foreach(c => p.signaler.send(Peer.Candidate(remote, local, c)))
-    remoteIceQueue.reverse.foreach{c =>
-      pc.addIceCandidate(c).andThen({ x: Any =>
-        println("addIceCandidate. success")
-        debug
-      }, handleError _)
-    }
-  }
-
   def answer(offer:RTCSessionDescription) = {
     println("creating an answer..")
     pc.createAnswer().andThen({ answer:RTCSessionDescription =>
