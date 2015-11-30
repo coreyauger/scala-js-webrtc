@@ -75,7 +75,7 @@ class Peer(p:Peer.Props) {
   val pc = new RTCPeerConnection(p.rtcConfiguration)
   val addStream = pc.addStream _
   val removeStream = pc.removeStream _
-  
+
   pc.onaddstream = { evt: MediaStreamEvent =>
     println("onaddstream")
     debug
@@ -98,20 +98,16 @@ class Peer(p:Peer.Props) {
   var onRemoveStream = (stream:MediaStream) => {}
 
   pc.onicecandidate = { evt:RTCPeerConnectionIceEvent =>
-    println("[INTO] - onicecandidate")
-    println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
-    if( evt.candidate != null)
-      p.signaler.send(Peer.Candidate(remote,local, evt.candidate))
-    else
+    if( evt.candidate != null) {
+      println(s"Sending candidate ${evt.candidate}")
+      p.signaler.send(Peer.Candidate(remote, local, evt.candidate))
+    }else
       println("[WARN] - there was a NULL for candidate")
-    debug
   }
   pc.onnegotiationneeded = { evt:Event =>
     println("onNegotiationneeded")
-    debug
   }
   pc.oniceconnectionstatechange = { evt:Event =>
-    println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
     println("oniceconnectionstatechange")
     pc.iceConnectionState match {
       case IceConnectionState.failed =>
@@ -127,8 +123,9 @@ class Peer(p:Peer.Props) {
 
       case allOther =>
         println(s"IceConnectionState ${allOther}")
-        debug
+
     }
+    debug
   }
   pc.onsignalingstatechange = { evt:Event =>
     debug
