@@ -75,7 +75,7 @@ class Peer(p:Peer.Props) {
   val pc = new RTCPeerConnection(p.rtcConfiguration)
   val addStream = pc.addStream _
   val removeStream = pc.removeStream _
-
+  
   pc.onaddstream = { evt: MediaStreamEvent =>
     println("onaddstream")
     debug
@@ -100,7 +100,7 @@ class Peer(p:Peer.Props) {
   pc.onicecandidate = { evt:RTCPeerConnectionIceEvent =>
     println("[INTO] - onicecandidate")
     println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
-    if( evt != null && evt.candidate != null)
+    if( evt.candidate != null)
       p.signaler.send(Peer.Candidate(remote,local, evt.candidate))
     else
       println("[WARN] - there was a NULL for candidate")
@@ -171,6 +171,17 @@ class Peer(p:Peer.Props) {
 
   def end = {
     pc.close
+  }
+
+  def setupIceExchange = {
+    readyForIceExchange = true
+    localIceQueue.reverse.foreach(c => p.signaler.send(Peer.Candidate(remote, local, c)))
+    remoteIceQueue.reverse.foreach{c =>
+      pc.addIceCandidate(c).andThen({ x: Any =>
+        println("addIceCandidate. success")
+        debug
+      }, handleError _)
+    }
   }
 
   def answer(offer:RTCSessionDescription) = {
