@@ -154,9 +154,9 @@ class Peer(p:Peer.Props) {
       val expandedOffer =  RTCSessionDescription(`type` = "offer", sdp = offer.sdp)
       //println(s"offer: ${offer}")
       println("setLocalDescription")
-      pc.setLocalDescription(offer).andThen({ x:Any =>
+      pc.setLocalDescription(expandedOffer).andThen({ x:Any =>
         println("signal offer")
-        p.signaler.send(Peer.Offer(remote, local, pc.localDescription))
+        p.signaler.send(Peer.Offer(remote, local, expandedOffer))
         debug
       },handleError _)
     },handleError _)
@@ -170,12 +170,12 @@ class Peer(p:Peer.Props) {
     pc.close
   }
 
-  def answer(offer:RTCSessionDescription) = {
+  def answer = {
     println("creating an answer..")
     pc.createAnswer().andThen({ answer:RTCSessionDescription =>
       pc.setLocalDescription(answer).andThen({ x:Any =>
         println(s"createAnswer for:  ${remote}")
-        p.signaler.send(Peer.Answer(remote, local, pc.localDescription))
+        p.signaler.send(Peer.Answer(remote, local, answer))
         debug
       },handleError _)
 
@@ -195,7 +195,7 @@ class Peer(p:Peer.Props) {
           println("setRemoteDescription success")
           println("CALLING answer")
           // auto-accept
-          answer(offer)
+          answer
           debug
         },handleError _)
 
