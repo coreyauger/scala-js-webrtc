@@ -161,13 +161,12 @@ class Peer(p:Peer.Props) {
         println("signal offer")
         p.signaler.send(Peer.Offer(remote, local, offer))
         debug
-      })
-    })
+      },handleError _)
+    },handleError _)
   }
 
-  def handleError(err:DOMError):Unit = {
-    println("ERROR")
-    println(err)
+  def handleError(err:Any):Unit = {
+    println(s"[ERROR] - ${err}")
   }
 
   def end = {
@@ -181,9 +180,9 @@ class Peer(p:Peer.Props) {
         println(s"createAnswer for:  ${remote}")
         p.signaler.send(Peer.Answer(remote, local, answer))
         debug
-      })
+      },handleError _)
 
-    })
+    },handleError _)
   }
 
 
@@ -201,7 +200,7 @@ class Peer(p:Peer.Props) {
           // auto-accept
           answer(offer)
           debug
-        })
+        },handleError _)
 
       case Peer.Answer(r, l, answer) if l.id == remote.id =>
         println(s"Peer.Answer from: ${l}")
@@ -209,14 +208,14 @@ class Peer(p:Peer.Props) {
           println("setRemoteDescription. success")
           debug
           // SEE   if (self.wtFirefox) { .. }  https://github.com/otalk/RTCPeerConnection/blob/master/rtcpeerconnection.js#L507
-        })
+        },handleError _)
 
       case Peer.Candidate(r, l, candidate) if l.id == remote.id =>
         println(s"Peer.Candidate ${candidate.toString}")
         pc.addIceCandidate(candidate).andThen({ x:Any =>
           println("addIceCandidate. success")
           debug
-        })
+        },handleError _)
 
       case Peer.Error(r, l, reason) if l.id == remote.id =>
         println(s"[ERROR] - Peer sent you error: ${reason}")
