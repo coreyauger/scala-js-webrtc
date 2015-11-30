@@ -16,8 +16,6 @@ object Peer{
                    remote:PeerInfo,
                    signaler: PeerSignaler,
                    rtcConfiguration:RTCConfiguration,
-                   receiveMedia: MediaConstraints,
-                   peerConnectionConstraints: MediaConstraints,
                    `type`:String = "video",
                    oneway:Boolean = false,
                    sharemyscreen:Boolean = false,
@@ -73,7 +71,7 @@ class Peer(p:Peer.Props) {
 
   var streams = List.empty[MediaStream]
 
-  val pc = new RTCPeerConnection(p.rtcConfiguration, p.peerConnectionConstraints)
+  val pc = new RTCPeerConnection(p.rtcConfiguration)
   val addStream = pc.addStream _
   val removeStream = pc.removeStream _
 
@@ -145,15 +143,15 @@ class Peer(p:Peer.Props) {
     //  getDataChannel('simplewebrtc');
     //}
     println("create offer")
-    pc.createOffer({ offer:RTCSessionDescription =>
+    pc.createOffer().andThen({ offer:RTCSessionDescription =>
       val expandedOffer =  RTCSessionDescription(`type` = "offer", sdp = offer.sdp)
       //println(s"offer: ${offer}")
       println("setLocalDescription")
-      pc.setLocalDescription(offer,() =>{
+      pc.setLocalDescription(offer).andThen({ x:Any =>
         println("signal offer")
         p.signaler.send(Peer.Offer(remote, local, offer))
-      },handleError _)
-    },handleError _,p.receiveMedia)
+      })
+    })
   }
 
   def handleError(err:DOMError):Unit = {
@@ -167,13 +165,13 @@ class Peer(p:Peer.Props) {
 
   def answer(offer:RTCSessionDescription) = {
     println("creating an answer..")
-    pc.createAnswer({ answer:RTCSessionDescription =>
-      pc.setLocalDescription(answer,() => {
+    pc.createAnswer().andThen({ answer:RTCSessionDescription =>
+      pc.setLocalDescription(answer).andThen({ x:Any =>
         println(s"createAnswer for:  ${remote}")
         p.signaler.send(Peer.Answer(remote, local, answer))
-      },handleError _)
+      })
 
-    },handleError _, p.receiveMedia)
+    })
   }
 
 
@@ -185,24 +183,24 @@ class Peer(p:Peer.Props) {
       case Peer.Offer(r, l, offer) if l.id == remote.id =>
         //println(s"Offer ${offer.toString}")
         println(s"Peer.Offer from: ${l}")
-        pc.setRemoteDescription(offer,() => {
+        pc.setRemoteDescription(offer).andThen({ x:Any =>
           println("setRemoteDescription success")
           // auto-accept
           answer(offer)
-        },handleError _)
+        })
 
       case Peer.Answer(r, l, answer) if l.id == remote.id =>
         println(s"Peer.Answer from: ${l}")
-        pc.setRemoteDescription(answer, () => {
+        pc.setRemoteDescription(answer).andThen({ x:Any =>
           println("setRemoteDescription. success")
           // SEE   if (self.wtFirefox) { .. }  https://github.com/otalk/RTCPeerConnection/blob/master/rtcpeerconnection.js#L507
-        },handleError _)
+        })
 
       case Peer.Candidate(r, l, candidate) if l.id == remote.id =>
         println(s"Peer.Candidate ${candidate.toString}")
-        pc.addIceCandidate(candidate, () => {
+        pc.addIceCandidate(candidate).andThen({ x:Any =>
           println("addIceCandidate. success")
-        },handleError _)
+        })
 
       case Peer.Error(r, l, reason) if l.id == remote.id =>
         println(s"Peer sent you error: ${reason}")

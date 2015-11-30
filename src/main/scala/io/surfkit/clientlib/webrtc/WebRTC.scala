@@ -10,7 +10,7 @@ import scala.scalajs.js
 /**
  * Created by corey auger on 13/11/15.
  */
-class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, props:WebRTC.Props) extends LocalMedia with Peer.PeerSignaler{
+class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config:RTCConfiguration) extends LocalMedia with Peer.PeerSignaler{
   var peers = js.Array[Peer]()
 
   def send(s:Peer.Signaling):Unit = signaler.send(s)
@@ -44,18 +44,3 @@ class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, props:WebR
 
 }
 
-object WebRTC{
-  case class Props(
-    rtcConfiguration:RTCConfiguration = RTCConfiguration(
-      iceServers = js.Array[RTCIceServer](
-        RTCIceServer(url = "stun:stun.l.google.com:19302")
-      )
-    ),
-    receiveMedia:MediaConstraints = MediaConstraints(
-      mandatory = js.Dynamic.literal(OfferToReceiveAudio = true, OfferToReceiveVideo = true)
-    ),
-    peerConnectionConstraints:MediaConstraints = MediaConstraints(optional = js.Array[js.Dynamic](
-      js.Dynamic.literal(DtlsSrtpKeyAgreement = true)
-    )))
-
-}

@@ -15,10 +15,10 @@ import org.scalajs.dom.{MediaStream, MediaStreamTrack, MediaStreamEvent}
 /**
  * Created by corey auger on 13/11/15.
  */
-class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, props:WebRTC.Props) extends WebRTC[M, T](signaler,props) {
+class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config:RTCConfiguration) extends WebRTC[M, T](signaler,config) {
 
 
-  def startLocalVideo(constraints:MediaConstraints, videoElm:dom.html.Video):Future[MediaStream] = {
+  def startLocalVideo(constraints:MediaStreamConstraints, videoElm:dom.html.Video):Future[MediaStream] = {
     startLocalMedia(constraints).map{ stream: MediaStream =>
       val videoDyn = (videoElm.asInstanceOf[js.Dynamic])
       videoDyn.muted = true
@@ -43,9 +43,7 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, prop
             remote = Peer.PeerInfo(m.id, m.`type`),
             local = signaler.localPeer,
             signaler = signaler,
-            rtcConfiguration = props.rtcConfiguration,
-            receiveMedia = props.receiveMedia,
-            peerConnectionConstraints = props.peerConnectionConstraints
+            rtcConfiguration = config
           ))
           peer.start
         }
@@ -60,9 +58,7 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, prop
               remote = o.local,
               local = signaler.localPeer,
               signaler = signaler,
-              rtcConfiguration = props.rtcConfiguration,
-              receiveMedia = props.receiveMedia,
-              peerConnectionConstraints = props.peerConnectionConstraints
+              rtcConfiguration = config
             ))
             peer.handleMessage(o)
         }

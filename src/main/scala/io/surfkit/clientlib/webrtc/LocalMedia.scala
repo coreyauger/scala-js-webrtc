@@ -57,12 +57,12 @@ trait LocalMedia extends Hark{
   }
 
 
-  def startLocalMedia(constraints: MediaConstraints):Future[MediaStream] = {
+  def startLocalMedia(constraints: MediaStreamConstraints):Future[MediaStream] = {
     println("stream.. ")
     val p = Promise[MediaStream]()
     MediaDevices.getUserMedia(constraints).andThen((stream:MediaStream) => {
       println("stream.. ")
-      if (constraints.audio && Config.detectSpeakingEvents) {
+      if (Config.detectSpeakingEvents) {
         setupAudioMonitor(stream, Hark.Options(
           play = false
         ))
