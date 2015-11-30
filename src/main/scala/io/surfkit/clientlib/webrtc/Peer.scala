@@ -76,7 +76,8 @@ class Peer(p:Peer.Props) {
   val removeStream = pc.removeStream _
 
   var readyForIceExchange = false
-  var iceQueue = List.empty[RTCIceCandidate]
+  var localIceQueue = List.empty[RTCIceCandidate]
+  var remoteIceQueue = List.empty[RTCIceCandidate]
 
 
   pc.onaddstream = { evt: MediaStreamEvent =>
@@ -106,6 +107,8 @@ class Peer(p:Peer.Props) {
     if( evt != null && evt.candidate != null)
       if(readyForIceExchange)
         p.signaler.send(Peer.Candidate(remote,local, evt.candidate))
+      else
+        localIceQueue = evt.candidate :: localIceQueue
     else
       println("[WARN] - there was a NULL for candidate")
     debug
@@ -177,13 +180,24 @@ class Peer(p:Peer.Props) {
     pc.close
   }
 
+  def setupIceExchange = {
+    readyForIceExchange = true
+    localIceQueue.reverse.foreach(c => p.signaler.send(Peer.Candidate(remote, local, c)))
+    remoteIceQueue.reverse.foreach{c =>
+      pc.addIceCandidate(c).andThen({ x: Any =>
+        println("addIceCandidate. success")
+        debug
+      }, handleError _)
+    }
+  }
+
   def answer(offer:RTCSessionDescription) = {
     println("creating an answer..")
     pc.createAnswer().andThen({ answer:RTCSessionDescription =>
       pc.setLocalDescription(answer).andThen({ x:Any =>
         println(s"createAnswer for:  ${remote}")
         p.signaler.send(Peer.Answer(remote, local, answer))
-        readyForIceExchange = true
+        setupIceExchange
         debug
       },handleError _)
 
@@ -211,7 +225,7 @@ class Peer(p:Peer.Props) {
         println(s"Peer.Answer from: ${l}")
         pc.setRemoteDescription(answer).andThen({ x:Any =>
           println("setRemoteDescription. success")
-          readyForIceExchange = true
+          setupIceExchange
           debug
           // SEE   if (self.wtFirefox) { .. }  https://github.com/otalk/RTCPeerConnection/blob/master/rtcpeerconnection.js#L507
         },handleError _)
@@ -223,6 +237,8 @@ class Peer(p:Peer.Props) {
             println("addIceCandidate. success")
             debug
           }, handleError _)
+        }else{
+          remoteIceQueue = evt.candidate :: remoteIceQueue
         }
 
       case Peer.Error(r, l, reason) if l.id == remote.id =>
