@@ -77,6 +77,8 @@ class Peer(p:Peer.Props) {
 
 
   pc.onaddstream = { evt: MediaStreamEvent =>
+    println("onaddstream")
+    debug
     evt.stream.getTracks.foreach{ t:MediaStreamTrack =>
       t.oneended = { ev:Event =>
         println("Track oneended")
@@ -102,9 +104,11 @@ class Peer(p:Peer.Props) {
       p.signaler.send(Peer.Candidate(remote,local, evt.candidate))
     else
       println("[WARN] - there was a NULL for candidate")
+    debug
   }
   pc.onnegotiationneeded = { evt:Event =>
     println("onNegotiationneeded")
+    debug
   }
   pc.oniceconnectionstatechange = { evt:Event =>
     println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
@@ -123,9 +127,14 @@ class Peer(p:Peer.Props) {
 
       case allOther =>
         println(s"IceConnectionState ${allOther}")
+        debug
     }
   }
   pc.onsignalingstatechange = { evt:Event =>
+    debug
+  }
+
+  def debug = {
     println(s"=======================================================================")
     println(s"[INFO] - onsignalingstatechange: ${pc.signalingState}")
     println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
