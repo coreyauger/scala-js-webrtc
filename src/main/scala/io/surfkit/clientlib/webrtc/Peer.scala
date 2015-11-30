@@ -71,12 +71,14 @@ class Peer(p:Peer.Props) {
 
   var streams = List.empty[MediaStream]
 
+  println(p.rtcConfiguration)
   val pc = new RTCPeerConnection(p.rtcConfiguration)
   val addStream = pc.addStream _
   val removeStream = pc.removeStream _
 
-
   pc.onaddstream = { evt: MediaStreamEvent =>
+    println("onaddstream")
+    debug
     evt.stream.getTracks.foreach{ t:MediaStreamTrack =>
       t.oneended = { ev:Event =>
         println("Track oneended")
@@ -98,13 +100,15 @@ class Peer(p:Peer.Props) {
   pc.onicecandidate = { evt:RTCPeerConnectionIceEvent =>
     println("[INTO] - onicecandidate")
     println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
-    if( evt.candidate != null)  // FIXME: really ?
+    if( evt != null && evt.candidate != null)
       p.signaler.send(Peer.Candidate(remote,local, evt.candidate))
     else
       println("[WARN] - there was a NULL for candidate")
+    debug
   }
   pc.onnegotiationneeded = { evt:Event =>
     println("onNegotiationneeded")
+    debug
   }
   pc.oniceconnectionstatechange = { evt:Event =>
     println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
@@ -123,12 +127,18 @@ class Peer(p:Peer.Props) {
 
       case allOther =>
         println(s"IceConnectionState ${allOther}")
+        debug
     }
   }
   pc.onsignalingstatechange = { evt:Event =>
-    println(s"=======================================================================")
-    println(s"[INFO] - onsignalingstatechange: ${pc.signalingState}")
-    println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
+    debug
+  }
+
+  def debug = {
+    //println(s"=======================================================================")
+    println(s"[INFO] - iceConnectionState:      ${pc.iceConnectionState}")
+    println(s"[INFO] - onsignalingstatechange:  ${pc.signalingState}")
+    println(s"[INFO] - ice gathering state      ${pc.iceGatheringState}")
     println(s"=======================================================================")
   }
 
@@ -149,14 +159,14 @@ class Peer(p:Peer.Props) {
       println("setLocalDescription")
       pc.setLocalDescription(offer).andThen({ x:Any =>
         println("signal offer")
-        p.signaler.send(Peer.Offer(remote, local, offer))
-      })
-    })
+        p.signaler.send(Peer.Offer(remote, local, pc.localDescription))
+        debug
+      },handleError _)
+    },handleError _)
   }
 
-  def handleError(err:DOMError):Unit = {
-    println("ERROR")
-    println(err)
+  def handleError(err:Any):Unit = {
+    println(s"[ERROR] - ${err}")
   }
 
   def end = {
@@ -168,15 +178,16 @@ class Peer(p:Peer.Props) {
     pc.createAnswer().andThen({ answer:RTCSessionDescription =>
       pc.setLocalDescription(answer).andThen({ x:Any =>
         println(s"createAnswer for:  ${remote}")
-        p.signaler.send(Peer.Answer(remote, local, answer))
-      })
+        p.signaler.send(Peer.Answer(remote, local, pc.localDescription))
+        debug
+      },handleError _)
 
-    })
+    },handleError _)
   }
 
 
   def handleMessage(message:Peer.Signaling):Unit = {
-    println(s"handleMessage ${message.toString}")
+    //println(s"handleMessage ${message.toString}")
 
     //if (message.prefix) this.browserPrefix = message.prefix;
     message match{
@@ -185,28 +196,32 @@ class Peer(p:Peer.Props) {
         println(s"Peer.Offer from: ${l}")
         pc.setRemoteDescription(offer).andThen({ x:Any =>
           println("setRemoteDescription success")
+          println("CALLING answer")
           // auto-accept
           answer(offer)
-        })
+          debug
+        },handleError _)
 
       case Peer.Answer(r, l, answer) if l.id == remote.id =>
         println(s"Peer.Answer from: ${l}")
         pc.setRemoteDescription(answer).andThen({ x:Any =>
           println("setRemoteDescription. success")
+          debug
           // SEE   if (self.wtFirefox) { .. }  https://github.com/otalk/RTCPeerConnection/blob/master/rtcpeerconnection.js#L507
-        })
+        },handleError _)
 
       case Peer.Candidate(r, l, candidate) if l.id == remote.id =>
         println(s"Peer.Candidate ${candidate.toString}")
         pc.addIceCandidate(candidate).andThen({ x:Any =>
           println("addIceCandidate. success")
-        })
+          debug
+        },handleError _)
 
       case Peer.Error(r, l, reason) if l.id == remote.id =>
-        println(s"Peer sent you error: ${reason}")
+        println(s"[ERROR] - Peer sent you error: ${reason}")
 
       case _ =>
-        println(s"Unkown peer handleMessage ${message}")
+        println(s"[WARN] - Unkown peer handleMessage ${message}")
     }
   }
 
