@@ -136,8 +136,9 @@ class Peer(p:Peer.Props) {
 
   def debug = {
     println(s"=======================================================================")
-    println(s"[INFO] - onsignalingstatechange: ${pc.signalingState}")
-    println(s"[INFO] - ice gathering state ${pc.iceGatheringState}")
+    println(s"[INFO] - iceConnectionState:      ${pc.iceConnectionState}")
+    println(s"[INFO] - onsignalingstatechange:  ${pc.signalingState}")
+    println(s"[INFO] - ice gathering state      ${pc.iceGatheringState}")
     println(s"=======================================================================")
   }
 
@@ -159,6 +160,7 @@ class Peer(p:Peer.Props) {
       pc.setLocalDescription(offer).andThen({ x:Any =>
         println("signal offer")
         p.signaler.send(Peer.Offer(remote, local, offer))
+        debug
       })
     })
   }
@@ -178,6 +180,7 @@ class Peer(p:Peer.Props) {
       pc.setLocalDescription(answer).andThen({ x:Any =>
         println(s"createAnswer for:  ${remote}")
         p.signaler.send(Peer.Answer(remote, local, answer))
+        debug
       })
 
     })
@@ -185,7 +188,7 @@ class Peer(p:Peer.Props) {
 
 
   def handleMessage(message:Peer.Signaling):Unit = {
-    println(s"handleMessage ${message.toString}")
+    //println(s"handleMessage ${message.toString}")
 
     //if (message.prefix) this.browserPrefix = message.prefix;
     message match{
@@ -194,14 +197,17 @@ class Peer(p:Peer.Props) {
         println(s"Peer.Offer from: ${l}")
         pc.setRemoteDescription(offer).andThen({ x:Any =>
           println("setRemoteDescription success")
+          println("CALLING answer")
           // auto-accept
           answer(offer)
+          debug
         })
 
       case Peer.Answer(r, l, answer) if l.id == remote.id =>
         println(s"Peer.Answer from: ${l}")
         pc.setRemoteDescription(answer).andThen({ x:Any =>
           println("setRemoteDescription. success")
+          debug
           // SEE   if (self.wtFirefox) { .. }  https://github.com/otalk/RTCPeerConnection/blob/master/rtcpeerconnection.js#L507
         })
 
@@ -209,13 +215,14 @@ class Peer(p:Peer.Props) {
         println(s"Peer.Candidate ${candidate.toString}")
         pc.addIceCandidate(candidate).andThen({ x:Any =>
           println("addIceCandidate. success")
+          debug
         })
 
       case Peer.Error(r, l, reason) if l.id == remote.id =>
-        println(s"Peer sent you error: ${reason}")
+        println(s"[ERROR] - Peer sent you error: ${reason}")
 
       case _ =>
-        println(s"Unkown peer handleMessage ${message}")
+        println(s"[WARN] - Unkown peer handleMessage ${message}")
     }
   }
 
