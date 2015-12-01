@@ -71,6 +71,9 @@ class Peer(p:Peer.Props) {
 
   var streams = List.empty[MediaStream]
 
+  var canSendIce = false
+  var iceBuffer = List.empty[RTCIceCandidate]
+
   val pc = new RTCPeerConnection(p.rtcConfiguration)
   val addStream = pc.addStream _
   val removeStream = pc.removeStream _
@@ -97,8 +100,12 @@ class Peer(p:Peer.Props) {
 
   pc.onicecandidate = { evt:RTCPeerConnectionIceEvent =>
     if( evt.candidate != null) {
-      println(s"Sending candidate ${evt.candidate}")
-      p.signaler.send(Peer.Candidate(remote, local, evt.candidate))
+      if(canSendIce) {
+        println(s"Sending candidate ${evt.candidate}")
+        p.signaler.send(Peer.Candidate(remote, local, evt.candidate))
+      }else{
+        iceBuffer = evt.candidate :: iceBuffer
+      }
     }else
       println("[WARN] - there was a NULL for candidate")
   }
@@ -166,6 +173,12 @@ class Peer(p:Peer.Props) {
     pc.close
   }
 
+  def drainIce = {
+    canSendIce = true
+    iceBuffer.foreach(i => p.signaler.send(Peer.Candidate(remote, local, i)) )
+    iceBuffer = List.empty[RTCIceCandidate]
+  }
+
   def answer = {
     println("creating an answer..")
     pc.createAnswer().andThen({ answer:RTCSessionDescription =>
@@ -185,12 +198,14 @@ class Peer(p:Peer.Props) {
         pc.setRemoteDescription(offer).andThen({ x:Any =>
           println("setRemoteDescription success")
           answer
+          drainIce
         },handleError _)
 
       case Peer.Answer(r, l, answer) if l.id == remote.id =>
         println(s"Peer.Answer from: ${l}")
         pc.setRemoteDescription(answer).andThen({ x:Any =>
           println("setRemoteDescription. success")
+          drainIce
         },handleError _)
 
       case Peer.Candidate(r, l, candidate) if l.id == remote.id =>
