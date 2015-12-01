@@ -24,9 +24,6 @@ class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: RT
     println("add local stream..")
     localStreams.foreach(peer.addStream(_))
     peer.onAddStream = { s:MediaStream =>
-      s.oninactive = { ev:Event =>
-        peerStreamRemoved(peer)
-      }
       peerStreamAdded(peer)
     }
     peer.onRemoveStream = { s:MediaStream =>

@@ -1,12 +1,12 @@
 package io.surfkit.clientlib.webrtc
 
 import org.scalajs.dom.raw.DOMError
-
 import scala.concurrent.{Promise, Future}
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
 import scala.scalajs.js.{timers, Function}
 import org.scalajs.dom.experimental.webrtc._
+import org.scalajs.dom.experimental.mediastream._
 import org.scalajs.dom._
 
 import scala.util.Try
@@ -56,14 +56,16 @@ trait LocalMedia extends Hark{
     }
   }
 
-  def handleError(err:Any):Unit = {
+  def handleError(err:DOMError):Unit = {
     println(s"[ERROR] - ${err}")
   }
 
   def startLocalMedia(constraints: MediaStreamConstraints):Future[MediaStream] = {
     println("stream.. ")
     val p = Promise[MediaStream]()
-    MediaDevices.getUserMedia(constraints).andThen((stream:MediaStream) => {
+    // NavigatorMediaStream
+    val navigator = org.scalajs.dom.window.navigator.asInstanceOf[NavigatorMediaStream]
+    navigator.getUserMedia(constraints, { stream:MediaStream =>
       println("stream.. ")
       if (Config.detectSpeakingEvents) {
         setupAudioMonitor(stream, Hark.Options(
@@ -83,7 +85,8 @@ trait LocalMedia extends Hark{
 
   def stopLocalMedia(stream:MediaStream):Unit = {
     // FIXME: duplicates cleanup code until fixed in FF
-    stream.getTracks().foreach(_.stop())
+    stream.getAudioTracks().foreach(_.stop())
+    stream.getVideoTracks().foreach(_.stop())
     if (localStreams.contains(stream)) {
       localStreamStopped(stream)
       localStreams -= stream
@@ -98,7 +101,8 @@ trait LocalMedia extends Hark{
       stopAudioMonitor
     }
     localStreams.foreach{s =>
-      s.getTracks().foreach(_.stop())
+      s.getAudioTracks().foreach(_.stop())
+      s.getVideoTracks().foreach(_.stop())
       localStreamStopped(s)
     }
     localStreams = Set.empty[MediaStream]
@@ -125,7 +129,8 @@ trait LocalMedia extends Hark{
   }
 
   def stopScreenShare(stream:MediaStream):Unit = {
-    stream.getTracks().foreach(_.stop())
+    stream.getAudioTracks().foreach(_.stop())
+    stream.getVideoTracks().foreach(_.stop())
     localScreenStopped(stream)
     localScreens -= stream
   }

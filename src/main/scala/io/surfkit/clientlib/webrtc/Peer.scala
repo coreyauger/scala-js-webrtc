@@ -7,6 +7,7 @@ import org.scalajs.dom._
 import scala.util.Try
 import scalajs.js
 import org.scalajs.dom.experimental.webrtc._
+import org.scalajs.dom.experimental.mediastream._
 import org.scalajs.dom.raw.{DOMError, Event}
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -80,7 +81,8 @@ class Peer(p:Peer.Props) {
 
   pc.onaddstream = { evt: MediaStreamEvent =>
     println("onaddstream")
-    evt.stream.getTracks.foreach{ t:MediaStreamTrack =>
+    val tracks = evt.stream.getAudioTracks.concat(evt.stream.getVideoTracks)
+    tracks.foreach{ t:MediaStreamTrack =>
       t.oneended = { ev:Event =>
         println("Track oneended")
         onRemoveStream(evt.stream)

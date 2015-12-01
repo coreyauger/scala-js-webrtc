@@ -10,7 +10,7 @@ import org.scalajs.dom.experimental.webrtc._
 import org.scalajs.dom
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
-import org.scalajs.dom.{MediaStream, MediaStreamTrack, MediaStreamEvent}
+import org.scalajs.dom.experimental.mediastream._
 
 /**
  * Created by corey auger on 13/11/15.
