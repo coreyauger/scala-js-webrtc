@@ -71,14 +71,12 @@ class Peer(p:Peer.Props) {
 
   var streams = List.empty[MediaStream]
 
-  println(p.rtcConfiguration)
   val pc = new RTCPeerConnection(p.rtcConfiguration)
   val addStream = pc.addStream _
   val removeStream = pc.removeStream _
 
   pc.onaddstream = { evt: MediaStreamEvent =>
     println("onaddstream")
-    debug
     evt.stream.getTracks.foreach{ t:MediaStreamTrack =>
       t.oneended = { ev:Event =>
         println("Track oneended")
@@ -125,7 +123,6 @@ class Peer(p:Peer.Props) {
         println(s"IceConnectionState ${allOther}")
 
     }
-    debug
   }
   pc.onsignalingstatechange = { evt:Event =>
     debug
@@ -157,7 +154,6 @@ class Peer(p:Peer.Props) {
       pc.setLocalDescription(expandedOffer).andThen({ x:Any =>
         println("signal offer")
         p.signaler.send(Peer.Offer(remote, local, expandedOffer))
-        debug
       },handleError _)
     },handleError _)
   }
@@ -176,42 +172,30 @@ class Peer(p:Peer.Props) {
       pc.setLocalDescription(answer).andThen({ x:Any =>
         println(s"createAnswer for:  ${remote}")
         p.signaler.send(Peer.Answer(remote, local, answer))
-        debug
       },handleError _)
 
     },handleError _)
   }
 
-
-  def handleMessage(message:Peer.Signaling):Unit = {
-    //println(s"handleMessage ${message.toString}")
-
-    //if (message.prefix) this.browserPrefix = message.prefix;
+  def handleMessage(message:Peer.Signaling):Unit =
     message match{
       case Peer.Offer(r, l, offer) if l.id == remote.id =>
         //println(s"Offer ${offer.toString}")
         println(s"Peer.Offer from: ${l}")
         pc.setRemoteDescription(offer).andThen({ x:Any =>
           println("setRemoteDescription success")
-          println("CALLING answer")
-          // auto-accept
           answer
-          debug
         },handleError _)
 
       case Peer.Answer(r, l, answer) if l.id == remote.id =>
         println(s"Peer.Answer from: ${l}")
         pc.setRemoteDescription(answer).andThen({ x:Any =>
           println("setRemoteDescription. success")
-          debug
-          // SEE   if (self.wtFirefox) { .. }  https://github.com/otalk/RTCPeerConnection/blob/master/rtcpeerconnection.js#L507
         },handleError _)
 
       case Peer.Candidate(r, l, candidate) if l.id == remote.id =>
-        println(s"Peer.Candidate ${candidate.toString}")
         pc.addIceCandidate(candidate).andThen({ x:Any =>
           println("addIceCandidate. success")
-          debug
         },handleError _)
 
       case Peer.Error(r, l, reason) if l.id == remote.id =>
@@ -220,6 +204,5 @@ class Peer(p:Peer.Props) {
       case _ =>
         println(s"[WARN] - Unkown peer handleMessage ${message}")
     }
-  }
 
 }

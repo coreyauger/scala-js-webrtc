@@ -56,6 +56,9 @@ trait LocalMedia extends Hark{
     }
   }
 
+  def handleError(err:Any):Unit = {
+    println(s"[ERROR] - ${err}")
+  }
 
   def startLocalMedia(constraints: MediaStreamConstraints):Future[MediaStream] = {
     println("stream.. ")
@@ -74,15 +77,7 @@ trait LocalMedia extends Hark{
       }
       localStream(stream)
       p.complete(Try(stream))
-    })/*.recover( (err:DOMError) => {
-      println("error")
-      println(err)
-      if (Config.audioFallback && err.name == "DevicesNotFoundError" && constraints.video != false) {
-        constraints.video = false
-        start(constraints)
-      }
-      ""
-    })*/
+    }, handleError _ )
     p.future
   }
 
