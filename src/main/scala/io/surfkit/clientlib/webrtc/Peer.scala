@@ -147,14 +147,6 @@ class Peer(p:Peer.Props) {
 
 
   def start():Unit = {
-    // well, the webrtc api requires that we either
-    // a) create a datachannel a priori
-    // b) do a renegotiation later to add the SCTP m-line
-    // Let's do (a) first...
-    // TODO: ...
-    //if (enableDataChannels) {
-    //  getDataChannel('simplewebrtc');
-    //}
     println("create offer")
     pc.createOffer().andThen({ offer:RTCSessionDescription =>
       val expandedOffer =  RTCSessionDescription(`type` = "offer", sdp = offer.sdp)
