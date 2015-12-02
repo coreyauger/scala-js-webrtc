@@ -22,7 +22,6 @@ class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: RT
     println("create peer..")
     val peer = new Peer(props)
     println("add local stream..")
-    localStreams.foreach(peer.addStream(_))
     peer.onAddStream = { s:MediaStream =>
       peerStreamAdded(peer)
     }

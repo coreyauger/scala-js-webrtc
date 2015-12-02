@@ -35,8 +35,8 @@ object Peer{
   case class Join(remote: PeerInfo, local: PeerInfo, room:String) extends Signaling
   case class Room(remote: PeerInfo, local: PeerInfo, name:String, members:js.Array[PeerInfo]) extends Signaling
 
-  case class Offer(remote: PeerInfo, local: PeerInfo, offer:RTCSessionDescription) extends Signaling
-  case class Answer(remote: PeerInfo, local: PeerInfo, answer:RTCSessionDescription) extends Signaling
+  case class Offer(remote: PeerInfo, local: PeerInfo, offer: RTCSessionDescription, room: String) extends Signaling
+  case class Answer(remote: PeerInfo, local: PeerInfo, answer: RTCSessionDescription) extends Signaling
   case class Candidate(remote: PeerInfo, local: PeerInfo, candidate:RTCIceCandidate) extends Signaling
   case class Error(remote: PeerInfo, local: PeerInfo, reason:String) extends Signaling
 
@@ -146,7 +146,7 @@ class Peer(p:Peer.Props) {
   }
 
 
-  def start():Unit = {
+  def start(room: String):Unit = {
     println("create offer")
     pc.createOffer().andThen({ offer:RTCSessionDescription =>
       val expandedOffer =  RTCSessionDescription(`type` = "offer", sdp = offer.sdp)
@@ -154,7 +154,7 @@ class Peer(p:Peer.Props) {
       println("setLocalDescription")
       pc.setLocalDescription(expandedOffer).andThen({ x:Any =>
         println("signal offer")
-        p.signaler.send(Peer.Offer(remote, local, expandedOffer))
+        p.signaler.send(Peer.Offer(remote, local, expandedOffer, room))
       },handleError _)
     },handleError _)
   }
@@ -164,6 +164,8 @@ class Peer(p:Peer.Props) {
   }
 
   def end = {
+    canSendIce = false
+    iceBuffer = List.empty[RTCIceCandidate]
     pc.close
   }
 
@@ -186,7 +188,7 @@ class Peer(p:Peer.Props) {
 
   def handleMessage(message:Peer.Signaling):Unit =
     message match{
-      case Peer.Offer(r, l, offer) if l.id == remote.id =>
+      case Peer.Offer(r, l, offer, room) if l.id == remote.id =>
         //println(s"Offer ${offer.toString}")
         println(s"Peer.Offer from: ${l}")
         pc.setRemoteDescription(offer).andThen({ x:Any =>

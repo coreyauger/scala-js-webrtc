@@ -45,7 +45,8 @@ class SimpleWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, conf
             signaler = signaler,
             rtcConfiguration = config
           ))
-          peer.start
+          localStreams.foreach(peer.addStream(_))
+          peer.start(name)
         }
         p.complete(Try(r))
       case o:Peer.Offer if o.local.id != signaler.localPeer.id =>

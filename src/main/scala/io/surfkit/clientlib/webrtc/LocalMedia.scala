@@ -42,6 +42,8 @@ trait LocalMedia extends Hark{
   var videoOff:() => Unit = () => {}
   var videoOn:() => Unit = () => {}
 
+  def hasLocalStream = localStreams.size > 0
+
   onSpeaking = () => {
     if(!hardMuted)
       gainController.foreach(_.setGain(1.0))
@@ -64,8 +66,7 @@ trait LocalMedia extends Hark{
     println("stream.. ")
     val p = Promise[MediaStream]()
     // NavigatorMediaStream
-    val navigator = org.scalajs.dom.window.navigator.asInstanceOf[NavigatorMediaStream]
-    navigator.getUserMedia(constraints, { stream:MediaStream =>
+    org.scalajs.dom.window.navigator.getUserMedia(constraints, { stream:MediaStream =>
       println("stream.. ")
       if (Config.detectSpeakingEvents) {
         setupAudioMonitor(stream, Hark.Options(
