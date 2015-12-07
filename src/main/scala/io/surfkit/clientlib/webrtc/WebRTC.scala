@@ -4,6 +4,7 @@ import java.util.UUID
 import org.scalajs.dom.experimental.webrtc._
 import org.scalajs.dom._
 import org.scalajs.dom.raw.{DOMError, Event}
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -17,16 +18,26 @@ class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: RT
 
   var peerStreamAdded:(Peer) => Unit = { p => }
   var peerStreamRemoved:(Peer) => Unit = { p => }
+  var peerIceConnectionStateChange:(Peer) => Unit = { p => }
+  var peerSignalingStateChange:(Peer) => Unit = { p => }
 
   def createPeer(props:Peer.Props):Peer = {
     println("create peer..")
     val peer = new Peer(props)
     println("add local stream..")
     peer.onAddStream = { s:MediaStream =>
+      println("Got a MediaStream calling peerStreamAdded")
       peerStreamAdded(peer)
+      dom.window.console.log(peerStreamAdded.asInstanceOf[js.Dynamic])
     }
     peer.onRemoveStream = { s:MediaStream =>
       peerStreamRemoved(peer)
+    }
+    peer.onSignalingStateChange = { s =>
+      peerSignalingStateChange(peer)
+    }
+    peer.onIceConnectionStateChange = { s =>
+      peerIceConnectionStateChange(peer)
     }
     peers.push(peer)
     peer

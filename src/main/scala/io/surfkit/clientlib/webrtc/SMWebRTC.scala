@@ -7,6 +7,7 @@ import scala.scalajs.js
 import org.scalajs.dom.experimental.webrtc._
 import org.scalajs.dom
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.scalajs.js.annotation.{JSExportAll, JSExport}
 import scala.util.{Failure, Success, Try}
 import org.scalajs.dom.experimental.mediastream._
 import scala.scalajs.js.|
@@ -23,6 +24,7 @@ object SMWebRTC{
   }
 }
 
+@JSExportAll
 class SMWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: RTCConfiguration) extends WebRTC[M, T](signaler,config) {
 
   val blankRoom = Peer.Room(Peer.EmptyPeer, Peer.EmptyPeer, "", js.Array[Peer.PeerInfo]())
@@ -32,6 +34,7 @@ class SMWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: 
 
   var onJoinRoom: ((String, js.Array[Peer]) => Unit) = { (r,s) => }
   var onRing: (String, PeerInfo) => Unit = { (r,s) => }
+
 
   signaler.receivers =  js.Array[(Signaling) => Unit]()   // setup new receivers
   signaler.receivers.push({
@@ -102,6 +105,24 @@ class SMWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: 
     getLocalStream.foreach { stream =>
       signaler.send(Peer.Join(signaler.localPeer, signaler.localPeer, name))
     }
+  }
+
+  // JS Exports
+  def getPeers = peers
+
+  def onPeerStreamAdded(f:(Peer) => Unit):Unit = {
+    println("[INFO] - adding onPeerStreamAdded handler")
+    peerStreamAdded = f
+  }
+
+  def onPeerIceConnectionStateChange(f:(Peer) => Unit):Unit = {
+    println("[INFO] - adding onPeerIceConnectionStateChange handler")
+    peerIceConnectionStateChange = f
+  }
+
+  def onPeerSignalingStateChange(f:(Peer) => Unit):Unit = {
+    println("[INFO] - adding onPeerIceConnectionStateChange handler")
+    peerSignalingStateChange = f
   }
 
   def call(room: String) = {

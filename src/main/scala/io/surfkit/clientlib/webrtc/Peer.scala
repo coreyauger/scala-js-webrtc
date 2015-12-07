@@ -4,6 +4,7 @@ import java.util.UUID
 import io.surfkit.clientlib.webrtc.Peer.PeerInfo
 import org.scalajs.dom
 import org.scalajs.dom._
+import scala.scalajs.js.annotation.JSExportAll
 import scala.util.Try
 import scalajs.js
 import org.scalajs.dom.experimental.webrtc._
@@ -64,6 +65,7 @@ object Peer{
 /**
  * Created by corey auger on 14/11/15.
  */
+@JSExportAll
 class Peer(p:Peer.Props) {
 
   val local = p.local
@@ -78,6 +80,7 @@ class Peer(p:Peer.Props) {
   val pc = new RTCPeerConnection(p.rtcConfiguration)
   val addStream = pc.addStream _
   val removeStream = pc.removeStream _
+
 
   pc.onaddstream = { evt: MediaStreamEvent =>
     println("onaddstream")
@@ -99,6 +102,8 @@ class Peer(p:Peer.Props) {
   // Override these event handlers.
   var onAddStream = (stream:MediaStream) => {}
   var onRemoveStream = (stream:MediaStream) => {}
+  var onIceConnectionStateChange: (String) => Unit = { s => }
+  var onSignalingStateChange: (String) => Unit = { s => }
 
   pc.onicecandidate = { evt:RTCPeerConnectionIceEvent =>
     if( evt.candidate != null) {
@@ -108,8 +113,9 @@ class Peer(p:Peer.Props) {
       }else{
         iceBuffer = evt.candidate :: iceBuffer
       }
-    }else
+    }else {
       println("[WARN] - there was a NULL for candidate")
+    }
   }
   pc.onnegotiationneeded = { evt:Event =>
     println("onNegotiationneeded")
@@ -132,9 +138,11 @@ class Peer(p:Peer.Props) {
         println(s"IceConnectionState ${allOther}")
 
     }
+    onIceConnectionStateChange( pc.iceConnectionState )
   }
   pc.onsignalingstatechange = { evt:Event =>
     debug
+    onSignalingStateChange( pc.signalingState )
   }
 
   def debug = {
@@ -145,6 +153,11 @@ class Peer(p:Peer.Props) {
     println(s"=======================================================================")
   }
 
+  def localId = p.local.id
+  def remoteId = p.remote.id
+
+  def iceConnectionState = pc.iceConnectionState
+  def signalingState = pc.signalingState
 
   def start(room: String):Unit = {
     println("create offer")
