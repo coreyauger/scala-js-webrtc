@@ -65,7 +65,6 @@ object Peer{
 /**
  * Created by corey auger on 14/11/15.
  */
-@JSExportAll
 class Peer(p:Peer.Props) {
 
   val local = p.local
@@ -152,9 +151,6 @@ class Peer(p:Peer.Props) {
     println(s"[INFO] - ice gathering state      ${pc.iceGatheringState}")
     println(s"=======================================================================")
   }
-
-  def localId = p.local.id
-  def remoteId = p.remote.id
 
   def iceConnectionState = pc.iceConnectionState
   def signalingState = pc.signalingState

@@ -24,7 +24,6 @@ object SMWebRTC{
   }
 }
 
-@JSExportAll
 class SMWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: RTCConfiguration) extends WebRTC[M, T](signaler,config) {
 
   val blankRoom = Peer.Room(Peer.EmptyPeer, Peer.EmptyPeer, "", js.Array[Peer.PeerInfo]())
@@ -105,24 +104,6 @@ class SMWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: 
     getLocalStream.foreach { stream =>
       signaler.send(Peer.Join(signaler.localPeer, signaler.localPeer, name))
     }
-  }
-
-  // JS Exports
-  def getPeers = peers
-
-  def onPeerStreamAdded(f:(Peer) => Unit):Unit = {
-    println("[INFO] - adding onPeerStreamAdded handler")
-    peerStreamAdded = f
-  }
-
-  def onPeerIceConnectionStateChange(f:(Peer) => Unit):Unit = {
-    println("[INFO] - adding onPeerIceConnectionStateChange handler")
-    peerIceConnectionStateChange = f
-  }
-
-  def onPeerSignalingStateChange(f:(Peer) => Unit):Unit = {
-    println("[INFO] - adding onPeerIceConnectionStateChange handler")
-    peerSignalingStateChange = f
   }
 
   def call(room: String) = {
