@@ -174,6 +174,8 @@ class Peer(p:Peer.Props) {
 
   def end = {
     canSendIce = false
+    streams.foreach(_.getVideoTracks.foreach(_.stop))
+    streams.foreach(_.getAudioTracks.foreach(_.stop))
     iceBuffer = List.empty[RTCIceCandidate]
     pc.close
   }
