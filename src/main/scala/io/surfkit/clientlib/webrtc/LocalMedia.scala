@@ -85,7 +85,6 @@ trait LocalMedia extends Hark{
   }
 
   def stopLocalMedia(stream:MediaStream):Unit = {
-    // FIXME: duplicates cleanup code until fixed in FF
     stream.getAudioTracks().foreach(_.stop())
     stream.getVideoTracks().foreach(_.stop())
     if (localStreams.contains(stream)) {

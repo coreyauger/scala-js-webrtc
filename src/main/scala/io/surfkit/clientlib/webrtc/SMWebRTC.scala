@@ -106,12 +106,26 @@ class SMWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: 
     }
   }
 
-  def call(room: String) = {
+  def retryPeer(peer:Peer) = {
+    peer.iceConnectionState match{
+      case IceConnectionState.connected | IceConnectionState.completed =>
+        println("Already Connected.. skipping peer")
+      case _ =>
+        peer.start(room.name)   // try to restart the peer..
+    }
+  }
+
+  def call(roomName: String) = {
     callState = SMWebRTC.CallState.call
-    peers.foreach(_.end)
-    peers = js.Array[Peer]()
-    getLocalStream.foreach { stream =>
-      signaler.send(Peer.Join(signaler.localPeer, signaler.localPeer, room))
+    if(hasLocalStream && room.name == roomName){
+      // we are in the room.. but trying to call.  Just retry peers that are not in a connected state
+      peers.foreach(retryPeer)
+    }else {
+      peers.foreach(_.end)
+      peers = js.Array[Peer]()
+      getLocalStream.foreach { stream =>
+        signaler.send(Peer.Join(signaler.localPeer, signaler.localPeer, roomName))
+      }
     }
   }
 
