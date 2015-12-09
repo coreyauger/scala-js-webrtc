@@ -53,7 +53,7 @@ trait LocalMedia extends Hark{
   onSpeakingStopped = () => {
     timers.clearTimeout(stopSpeakingTimeout)
     stopSpeakingTimeout = timers.setTimeout(1000){
-      gainController.foreach(_.setGain(0.4))
+      gainController.foreach(_.setGain(0.66))
       println("NOT speaking...")
     }
   }

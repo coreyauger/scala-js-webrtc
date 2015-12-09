@@ -21,8 +21,8 @@ trait Hark {
   val audioContext = audioContextPromise.future
 
   var speaking = false
-  var interval = 100
-  var threshold = 5000
+  var interval = 50
+  var threshold = -65
   var running = false
 
   // events
@@ -103,7 +103,7 @@ trait Hark {
 object Hark{
   case class Options(smoothing:Double = 0.1,
                      interval:Int = 50,
-                     threshold:Int = -55,
+                     threshold:Int = -65,
                      play:Boolean = false,
                      history:Int = 10)
 }
