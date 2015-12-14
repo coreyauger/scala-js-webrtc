@@ -1,9 +1,10 @@
 package io.surfkit.clientlib.webrtc
 
 import org.scalajs.dom.experimental.webrtc._
+import org.scalajs.dom.experimental.mediastream._
 import org.scalajs.dom.raw.AnalyserNode
+import org.scalajs.dom.AudioContext
 import org.scalajs.dom
-import org.scalajs.dom._
 /**
  * Created by coreyauger on 25/11/15.
  */

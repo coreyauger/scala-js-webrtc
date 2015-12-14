@@ -7,7 +7,8 @@ import scala.util.Try
 import org.scalajs.dom.experimental.webrtc._
 import org.scalajs.dom.raw.AnalyserNode
 import org.scalajs.dom
-import org.scalajs.dom._
+import org.scalajs.dom.AudioContext
+import org.scalajs.dom.experimental.mediastream._
 import scalajs.js
 
 
