@@ -20,6 +20,7 @@ class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: RT
   var peerStreamRemoved:(Peer) => Unit = { p => }
   var peerIceConnectionStateChange:(Peer) => Unit = { p => }
   var peerSignalingStateChange:(Peer) => Unit = { p => }
+  var peerCreated:(Peer) => Unit = { p => }
 
   def createPeer(props:Peer.Props):Peer = {
     println("create peer..")
@@ -40,6 +41,7 @@ class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: RT
       peerIceConnectionStateChange(peer)
     }
     peers.push(peer)
+    peerCreated(peer)
     peer
   }
 
