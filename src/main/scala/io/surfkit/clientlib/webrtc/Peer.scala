@@ -101,8 +101,8 @@ class Peer(p:Peer.Props) {
   // Override these event handlers.
   var onAddStream = (stream:MediaStream) => {}
   var onRemoveStream = (stream:MediaStream) => {}
-  var onIceConnectionStateChange: (String) => Unit = { s => }
-  var onSignalingStateChange: (String) => Unit = { s => }
+  var onIceConnectionStateChange: (RTCIceConnectionState) => Unit = { s => }
+  var onSignalingStateChange: (RTCSignalingState) => Unit = { s => }
 
   pc.onicecandidate = { evt:RTCPeerConnectionIceEvent =>
     if( evt.candidate != null) {
@@ -122,14 +122,14 @@ class Peer(p:Peer.Props) {
   pc.oniceconnectionstatechange = { evt:Event =>
     println("oniceconnectionstatechange")
     pc.iceConnectionState match {
-      case IceConnectionState.failed =>
+      case RTCIceConnectionState.failed =>
         // currently, in chrome only the initiator goes to failed
         // so we need to signal this to the peer
         if (pc.localDescription.`type` == RTCSdpType.offer) {
           println("iceFailed ")
           p.signaler.send( Peer.Error(remote, local, "connectivityError ICE FAILED"))
         }
-      case IceConnectionState.disconnected =>
+      case RTCIceConnectionState.disconnected =>
         println("[ERROR] - IceConnectionState.disconnected")
         streams.headOption.foreach(onRemoveStream)
 
@@ -158,7 +158,7 @@ class Peer(p:Peer.Props) {
   def start(room: String):Unit = {
     println("create offer")
     pc.createOffer().andThen({ offer:RTCSessionDescription =>
-      val expandedOffer =  RTCSessionDescription(`type` = "offer", sdp = offer.sdp)
+      val expandedOffer =  new RTCSessionDescription(RTCSessionDescriptionInit(`type` = RTCSdpType.offer, sdp = offer.sdp))
       //println(s"offer: ${offer}")
       println("setLocalDescription")
       pc.setLocalDescription(expandedOffer).andThen({ x:Any =>

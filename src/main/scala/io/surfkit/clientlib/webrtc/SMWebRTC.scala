@@ -108,7 +108,7 @@ class SMWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: 
 
   def retryPeer(peer:Peer) = {
     peer.iceConnectionState match{
-      case IceConnectionState.connected | IceConnectionState.completed =>
+      case RTCIceConnectionState.connected | RTCIceConnectionState.completed =>
         println("Already Connected.. skipping peer")
       case _ =>
         peer.start(room.name)   // try to restart the peer..
