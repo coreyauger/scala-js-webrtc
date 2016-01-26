@@ -46,7 +46,7 @@ object Peer{
   }
 
   trait ModelTransformPeerSignaler[T] extends PeerSignaler{
-    val localPeer:PeerInfo
+    var localPeer:PeerInfo
 
     var receivers = js.Array[(Signaling) => Unit]()
 

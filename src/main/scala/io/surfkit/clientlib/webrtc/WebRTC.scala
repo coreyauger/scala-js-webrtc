@@ -11,7 +11,7 @@ import scala.scalajs.js
 /**
  * Created by corey auger on 13/11/15.
  */
-class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: RTCConfiguration) extends LocalMedia with Peer.PeerSignaler{
+class WebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](val signaler: T, config: RTCConfiguration) extends LocalMedia with Peer.PeerSignaler{
   var peers = js.Array[Peer]()
 
   def send(s:Peer.Signaling):Unit = signaler.send(s)
