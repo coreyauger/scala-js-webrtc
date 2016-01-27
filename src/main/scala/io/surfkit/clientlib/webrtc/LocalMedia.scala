@@ -135,13 +135,13 @@ trait LocalMedia extends Hark{
     localScreens -= stream
   }
 
-  def mute():Unit = {
+  def mute:Unit = {
     audioEnabled(false)
     hardMuted = true
     audioOff()
   }
 
-  def unmute():Unit = {
+  def unmute:Unit = {
     audioEnabled(true)
     hardMuted = false
     audioOn()

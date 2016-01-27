@@ -132,6 +132,9 @@ class SMWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: 
   def hangup = {
     room = blankRoom
     callState = SMWebRTC.CallState.idle
+    peers.foreach(_.end)
+    peers = js.Array[Peer]()
+    stopStream()
   }
 
   def startLocalVideo(constraints:MediaStreamConstraints, videoElm:dom.html.Video):Future[MediaStream] = {
