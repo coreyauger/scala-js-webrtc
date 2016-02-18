@@ -223,6 +223,9 @@ class Peer(p:Peer.Props) {
       case Peer.Error(r, l, reason) if l.id == remote.id =>
         println(s"[ERROR] - Peer sent you error: ${reason}")
 
+      case x if x.local.id == local.id =>
+        // server echo message to self so ignore this.
+
       case _ =>
         println(s"[WARN] - Unkown peer handleMessage ${message}")
     }
