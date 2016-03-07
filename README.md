@@ -9,9 +9,6 @@ I provide you with a singaling server implementation in my project here:
 
 Getting webrtc to work in the wild will require that you setup a TURN server.  Again more info on this is provided in the above link.
 
-## WebRTC DOM extensions
-At the time of writing this my PR has not been merged into the scala-js-dom.  In the mean time you can use my branch of the dom for testing here: [https://github.com/coreyauger/scala-js-dom/tree/webrtc-api](https://github.com/coreyauger/scala-js-dom/tree/webrtc-api)
-
 # Usage
 In most cases you will already have a server setup that uses a websocket for your application and some defined `Model`.  This implementation attempts to provide you with the glue required to translating your `Model` types to the ones required under the hood.  
 
