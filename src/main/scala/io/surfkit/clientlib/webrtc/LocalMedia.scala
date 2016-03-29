@@ -63,15 +63,14 @@ trait LocalMedia extends Hark{
   }
 
   def startLocalMedia(constraints: MediaStreamConstraints):Future[MediaStream] = {
-    println("stream.. ")
     val p = Promise[MediaStream]()
+    println(s"stream.. new p => ${p.isCompleted}")
+
     // NavigatorMediaStream
     org.scalajs.dom.window.navigator.getUserMedia(constraints, { stream:MediaStream =>
-      println("stream.. ")
+      println(s"stream..  p: ${p.isCompleted}")
       if (Config.detectSpeakingEvents) {
-        setupAudioMonitor(stream, Hark.Options(
-          play = false
-        ))
+        setupAudioMonitor(stream, Hark.Options(play = false))
       }
       localStreams += stream
       if (Config.autoAdjustMic) {

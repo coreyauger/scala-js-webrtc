@@ -18,9 +18,6 @@ import scalajs.js
 
 trait Hark {
 
-  private val audioContextPromise = Promise[dom.AudioContext]
-  val audioContext = audioContextPromise.future
-
   var speaking = false
   var interval = 50
   var threshold = -65
@@ -31,7 +28,8 @@ trait Hark {
   var onSpeakingStopped = () => {}
   var onSpeaking = () => {}
 
-  def setupAudioMonitor(stream: MediaStream, opts: Hark.Options) ={
+  def setupAudioMonitor(stream: MediaStream, opts: Hark.Options):Future[dom.AudioContext] ={
+    val audioContextPromise = Promise[dom.AudioContext]
     val ac = new dom.AudioContext()
     audioContextPromise.complete(Try(ac))
     running = true
@@ -83,6 +81,7 @@ trait Hark {
       }
     }
     looper
+    audioContextPromise.future
   }
 
   def getMaxVolume (analyser:AnalyserNode, fftBins:Float32Array):Double = {
