@@ -6,12 +6,10 @@ sonatypeSettings
 
 lazy val root = project.in(file("."))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(scalaJsDom)
 
 lazy val demo = (project in file("demo"))
   .settings(demoSettings:_*)
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(scalaJsDom)
   .dependsOn(root)
 
 
@@ -19,7 +17,7 @@ lazy val demoSettings = Seq(
   name := s"webrtc-demo",
   scalaVersion := "2.11.6",
   libraryDependencies ++= Seq(
-//    "org.scala-js" %%% "scalajs-dom" % "0.8.2"
+    "org.scala-js" %%% "scalajs-dom" % "0.9.0"
   )
 )
 
@@ -36,10 +34,8 @@ scalaVersion := "2.11.6"
 crossScalaVersions := Seq("2.10.4", "2.11.5")
 
 libraryDependencies ++= Seq(
-//  "org.scala-js" %%% "scalajs-dom" % "0.8.2"
+  "org.scala-js" %%% "scalajs-dom" % "0.9.0"
 )
-
-lazy val scalaJsDom = uri("../scala-js-dom")
 
 jsDependencies in Test += RuntimeDOM
 

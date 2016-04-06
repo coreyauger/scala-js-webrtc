@@ -11,7 +11,7 @@ import org.scalajs.dom.experimental.webrtc._
 import org.scalajs.dom.experimental.mediastream._
 import org.scalajs.dom.raw.{DOMError, Event}
 import scala.concurrent.ExecutionContext.Implicits.global
-
+import scala.scalajs.js.|
 
 object Peer{
   case class Props(local:PeerInfo,
@@ -157,20 +157,26 @@ class Peer(p:Peer.Props) {
 
   def start(room: String):Unit = {
     println("create offer")
-    pc.createOffer().andThen({ offer:RTCSessionDescription =>
+    pc.createOffer().toFuture.map{ offer:RTCSessionDescription =>
       val expandedOffer =  new RTCSessionDescription(RTCSessionDescriptionInit(`type` = RTCSdpType.offer, sdp = offer.sdp))
       //println(s"offer: ${offer}")
       println("setLocalDescription")
-      pc.setLocalDescription(expandedOffer).andThen({ x:Any =>
+      pc.setLocalDescription(expandedOffer).toFuture.map{ x:Any =>
         println("signal offer")
         p.signaler.send(Peer.Offer(remote, local, expandedOffer, room))
-      },handleError _)
-    },handleError _)
+      }.recover(reportFailure)
+    }.recover(reportFailure)
   }
 
-  def handleError(err:Any):Unit = {
+/*  def handleError(err:Any):Unit = {
     println(s"[ERROR] - ${err}")
+  }*/
+  val reportFailure:scala.PartialFunction[scala.Throwable, Unit] = {
+    case t:Throwable =>
+      t.printStackTrace()
+      println("[ERROR] - An error has occured: " + t)
   }
+
 //
   def end = {
     canSendIce = false
@@ -188,13 +194,12 @@ class Peer(p:Peer.Props) {
 
   def answer = {
     println("creating an answer..")
-    pc.createAnswer().andThen({ answer:RTCSessionDescription =>
-      pc.setLocalDescription(answer).andThen({ x:Any =>
+    pc.createAnswer().toFuture.map{ answer:RTCSessionDescription =>
+      pc.setLocalDescription(answer).toFuture.map{ x:Any =>
         println(s"createAnswer for:  ${remote}")
         p.signaler.send(Peer.Answer(remote, local, answer))
-      },handleError _)
-
-    },handleError _)
+      }.recover(reportFailure)
+    }.recover(reportFailure)
   }
 
   def handleMessage(message:Peer.Signaling):Unit =
@@ -202,23 +207,23 @@ class Peer(p:Peer.Props) {
       case Peer.Offer(r, l, offer, room) if l.id == remote.id =>
         //println(s"Offer ${offer.toString}")
         println(s"Peer.Offer from: ${l}")
-        pc.setRemoteDescription(offer).andThen({ x:Any =>
+        pc.setRemoteDescription(offer).toFuture.map{ x:Any =>
           println("setRemoteDescription success")
           answer
           drainIce
-        },handleError _)
+        }.recover(reportFailure)
 
       case Peer.Answer(r, l, answer) if l.id == remote.id =>
         println(s"Peer.Answer from: ${l}")
-        pc.setRemoteDescription(answer).andThen({ x:Any =>
+        pc.setRemoteDescription(answer).toFuture.map{ x:Any =>
           println("setRemoteDescription. success")
           drainIce
-        },handleError _)
+        }.recover(reportFailure)
 
       case Peer.Candidate(r, l, candidate) if l.id == remote.id =>
-        pc.addIceCandidate(candidate).andThen({ x:Any =>
+        pc.addIceCandidate(candidate).toFuture.map{ x:Any =>
           println("addIceCandidate. success")
-        },handleError _)
+        }.recover(reportFailure)
 
       case Peer.Error(r, l, reason) if l.id == remote.id =>
         println(s"[ERROR] - Peer sent you error: ${reason}")
