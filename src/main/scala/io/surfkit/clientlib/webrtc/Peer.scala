@@ -156,7 +156,7 @@ class Peer(p:Peer.Props) {
   def signalingState = pc.signalingState
 
   def start(room: String):Unit = {
-    println("create offer")
+    println(s"create offer for room: ${room}")
     pc.createOffer().toFuture.map{ offer:RTCSessionDescription =>
       val expandedOffer =  new RTCSessionDescription(RTCSessionDescriptionInit(`type` = RTCSdpType.offer, sdp = offer.sdp))
       //println(s"offer: ${offer}")

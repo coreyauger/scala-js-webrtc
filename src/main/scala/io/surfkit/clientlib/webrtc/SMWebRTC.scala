@@ -111,6 +111,7 @@ class SMWebRTC[M, T <: Peer.ModelTransformPeerSignaler[M]](signaler: T, config: 
       case RTCIceConnectionState.connected | RTCIceConnectionState.completed =>
         println("Already Connected.. skipping peer")
       case _ =>
+        println(s"Signal restart for room ${room.name}")
         peer.start(room.name)   // try to restart the peer..
     }
   }
