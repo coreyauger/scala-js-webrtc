@@ -1,11 +1,11 @@
-import SonatypeKeys._
-
 import sbt.Keys._
 
-sonatypeSettings
-
 lazy val root = project.in(file("."))
-  .enablePlugins(ScalaJSPlugin)
+  .enablePlugins(ScalaJSPlugin).settings(
+  credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+  resolvers += "NextWave Repo" at "http://maxdevmaster.cloudapp.net:4343/artifactory/nxtwv-maven/",
+  publishTo := Some("NextWave Repo" at "http://maxdevmaster.cloudapp.net:4343/artifactory/nxtwv-maven/")
+)
 
 lazy val demo = (project in file("demo"))
   .settings(demoSettings:_*)
@@ -29,9 +29,9 @@ version := "0.1-SNAPSHOT"
 
 organization := "io.surfkit"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.8"
 
-crossScalaVersions := Seq("2.10.4", "2.11.5")
+crossScalaVersions := Seq("2.10.4", "2.11.7")
 
 libraryDependencies ++= Seq(
   "org.scala-js" %%% "scalajs-dom" % "0.9.0"
@@ -48,15 +48,6 @@ scmInfo := Some(ScmInfo(
     "scm:git:git@github.com/coreyauger/scala-js-webrtc.git",
     Some("scm:git:git@github.com:coreyauger/scala-js-webrtc.git")))
 
-publishMavenStyle := true
-
-publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
-  else
-    Some("releases" at nexus + "service/local/staging/deploy/maven2")
-}
 
 pomExtra := (
   <developers>
@@ -69,4 +60,3 @@ pomExtra := (
 )
 
 pomIncludeRepository := { _ => false }
-
