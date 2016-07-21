@@ -29,59 +29,65 @@ trait Hark {
   var onSpeaking = () => {}
 
   def setupAudioMonitor(stream: MediaStream, opts: Hark.Options):Future[dom.AudioContext] ={
-    val audioContextPromise = Promise[dom.AudioContext]
-    val ac = new dom.AudioContext()
-    audioContextPromise.complete(Try(ac))
-    running = true
+    try {
+      val audioContextPromise = Promise[dom.AudioContext]
+      val ac = new dom.AudioContext()
+      audioContextPromise.complete(Try(ac))
+      running = true
 
-    interval = opts.interval
-    threshold = opts.threshold
+      interval = opts.interval
+      threshold = opts.threshold
 
-    val analyser = ac.createAnalyser
-    analyser.fftSize = 512
-    analyser.smoothingTimeConstant = opts.smoothing
-    val fftBins = new Float32Array(analyser.fftSize)
+      val analyser = ac.createAnalyser
+      analyser.fftSize = 512
+      analyser.smoothingTimeConstant = opts.smoothing
+      val fftBins = new Float32Array(analyser.fftSize)
 
-    val sourceNode = ac.createMediaStreamSource(stream)
+      val sourceNode = ac.createMediaStreamSource(stream)
+
+      sourceNode.connect(analyser)
+      if (opts.play) analyser.connect(ac.destination)
+      speaking = false
 
 
-    sourceNode.connect(analyser)
-    if (opts.play) analyser.connect(ac.destination)
-    speaking = false
+      val speakingHistory = new js.Array[Int](opts.history)
 
-
-    val speakingHistory = new js.Array[Int](opts.history)
-
-    // Poll the analyser node to determine if speaking
-    // and emit events if changed
-    def looper():Unit =  {
-      timers.setTimeout(interval){
-        //check if stop has been called
-        if(running) {
-          val currentVolume = getMaxVolume(analyser, fftBins)
-          onVolumeChange(currentVolume, threshold)
-          if (currentVolume > threshold && !speaking) {
-            // trigger quickly, short history
-            val history = speakingHistory.reverse.take(4).sum
-            if (history >= 2) {
-              speaking = true
-              onSpeaking()
+      // Poll the analyser node to determine if speaking
+      // and emit events if changed
+      def looper(): Unit = {
+        timers.setTimeout(interval) {
+          //check if stop has been called
+          if (running) {
+            val currentVolume = getMaxVolume(analyser, fftBins)
+            onVolumeChange(currentVolume, threshold)
+            if (currentVolume > threshold && !speaking) {
+              // trigger quickly, short history
+              val history = speakingHistory.reverse.take(4).sum
+              if (history >= 2) {
+                speaking = true
+                onSpeaking()
+              }
+            } else if (currentVolume < threshold && speaking) {
+              val history = speakingHistory.sum
+              if (history == 0) {
+                speaking = false
+                onSpeakingStopped()
+              }
             }
-          } else if (currentVolume < threshold && speaking) {
-            val history = speakingHistory.sum
-            if (history == 0) {
-              speaking = false
-              onSpeakingStopped()
-            }
+            speakingHistory.shift()
+            speakingHistory.push(if (currentVolume > threshold) 1 else 0)
+            looper()
           }
-          speakingHistory.shift()
-          speakingHistory.push(if(currentVolume > threshold) 1 else 0)
-          looper()
         }
       }
+      looper
+      audioContextPromise.future
+    }catch{
+      case t:Throwable =>
+        t.printStackTrace()
+        println("Proceeding without Audio Monitor.")
+        Future.failed(t)
     }
-    looper
-    audioContextPromise.future
   }
 
   def getMaxVolume (analyser:AnalyserNode, fftBins:Float32Array):Double = {

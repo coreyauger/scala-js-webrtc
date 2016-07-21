@@ -70,13 +70,7 @@ trait LocalMedia extends Hark{
     org.scalajs.dom.window.navigator.getUserMedia(constraints, { stream:MediaStream =>
       println(s"stream..  p: ${p.isCompleted}")
       if (Config.detectSpeakingEvents) {
-        try {
-          setupAudioMonitor(stream, Hark.Options(play = false))
-        }catch {
-          case t:Throwable =>
-            t.printStackTrace()
-            println("Proceeding without Audio Monitor.")
-        }
+        setupAudioMonitor(stream, Hark.Options(play = false))
       }
       localStreams += stream
       if (Config.autoAdjustMic) {
