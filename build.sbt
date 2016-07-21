@@ -25,7 +25,7 @@ name := "ScalaJS WebRTC library. Based on SimpleWebRTC."
 
 normalizedName := "scala-js-webrtc"
 
-version := "0.0.3-SNAPSHOT"
+version := "0.0.3"
 
 organization := "io.surfkit"
 
